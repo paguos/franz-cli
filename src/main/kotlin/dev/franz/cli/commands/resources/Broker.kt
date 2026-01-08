@@ -4,8 +4,12 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.int
+import dev.franz.cli.kafka.KafkaService
 
-class GetBroker : CliktCommand(
+class GetBroker(
+    private val kafka: KafkaService = KafkaService.getInstance()
+) : CliktCommand(
     name = "broker",
     help = "List Kafka brokers"
 ) {
@@ -14,60 +18,86 @@ class GetBroker : CliktCommand(
     override fun run() {
         echo("Listing brokers...")
         echo()
-        echo("ID    HOST                PORT    RACK")
-        echo("1     broker-1.kafka      9092    us-east-1a")
-        echo("2     broker-2.kafka      9092    us-east-1b")
-        echo("3     broker-3.kafka      9092    us-east-1c")
-        echo()
-        echo("Controller: broker-1.kafka:9092 (id: 1)")
         
-        if (showConfigs) {
-            echo()
-            echo("Common Broker Configs:")
-            echo("  log.retention.hours=168")
-            echo("  num.partitions=3")
-            echo("  default.replication.factor=2")
+        val brokers = kafka.brokers.listBrokers()
+        val controllerId = kafka.brokers.getControllerId()
+        
+        echo("ID    HOST                PORT    RACK")
+        brokers.forEach { broker ->
+            echo("${broker.id.toString().padEnd(5)} ${broker.host.padEnd(19)} ${broker.port.toString().padEnd(7)} ${broker.rack ?: "N/A"}")
+        }
+        echo()
+        
+        val controller = brokers.find { it.id == controllerId }
+        if (controller != null) {
+            echo("Controller: ${controller.host}:${controller.port} (id: ${controller.id})")
+        }
+        
+        if (showConfigs && brokers.isNotEmpty()) {
+            val firstBroker = brokers.first()
+            if (firstBroker.configs.isNotEmpty()) {
+                echo()
+                echo("Common Broker Configs:")
+                firstBroker.configs.entries.take(3).forEach { (key, value) ->
+                    echo("  $key=$value")
+                }
+            }
         }
     }
 }
 
-class DescribeBroker : CliktCommand(
+class DescribeBroker(
+    private val kafka: KafkaService = KafkaService.getInstance()
+) : CliktCommand(
     name = "broker",
     help = "Show detailed information about a broker"
 ) {
-    private val id by argument(help = "Broker ID")
+    private val id by argument(help = "Broker ID").int()
     private val showLogDirs by option("--log-dirs", "-l", help = "Show log directory details").flag()
 
     override fun run() {
-        echo("Broker: $id")
-        echo("=".repeat(50))
-        echo("Host:              broker-$id.kafka")
-        echo("Port:              9092")
-        echo("Rack:              us-east-1a")
-        echo("Version:           3.6.0")
-        echo()
-        echo("Listeners:")
-        echo("  PLAINTEXT://broker-$id.kafka:9092")
-        echo("  SSL://broker-$id.kafka:9093")
-        echo()
-        echo("Configurations:")
-        echo("  log.retention.hours          = 168")
-        echo("  log.segment.bytes            = 1073741824")
-        echo("  num.io.threads               = 8")
-        echo("  num.network.threads          = 3")
-        echo("  num.replica.fetchers         = 1")
+        val broker = kafka.brokers.describeBroker(id)
         
-        if (showLogDirs) {
+        if (broker == null) {
+            echo("Broker '$id' not found.", err = true)
+            return
+        }
+        
+        echo("Broker: ${broker.id}")
+        echo("=".repeat(50))
+        echo("Host:              ${broker.host}")
+        echo("Port:              ${broker.port}")
+        echo("Rack:              ${broker.rack ?: "N/A"}")
+        echo("Version:           ${broker.version}")
+        echo()
+        
+        if (broker.listeners.isNotEmpty()) {
+            echo("Listeners:")
+            broker.listeners.forEach { listener ->
+                echo("  $listener")
+            }
+            echo()
+        }
+        
+        if (broker.configs.isNotEmpty()) {
+            echo("Configurations:")
+            broker.configs.forEach { (key, value) ->
+                echo("  ${key.padEnd(30)} = $value")
+            }
+        }
+        
+        if (showLogDirs && broker.logDirs.isNotEmpty()) {
             echo()
             echo("Log Directories:")
-            echo("  /var/kafka/data-1:")
-            echo("    Total:     500 GB")
-            echo("    Used:      234 GB (46.8%)")
-            echo("    Available: 266 GB")
-            echo("  /var/kafka/data-2:")
-            echo("    Total:     500 GB")
-            echo("    Used:      198 GB (39.6%)")
-            echo("    Available: 302 GB")
+            broker.logDirs.forEach { logDir ->
+                val totalGb = logDir.totalBytes / (1024 * 1024 * 1024)
+                val usedGb = logDir.usedBytes / (1024 * 1024 * 1024)
+                val availableGb = logDir.availableBytes / (1024 * 1024 * 1024)
+                echo("  ${logDir.path}:")
+                echo("    Total:     $totalGb GB")
+                echo("    Used:      $usedGb GB (${"%.1f".format(logDir.usedPercent)}%)")
+                echo("    Available: $availableGb GB")
+            }
         }
     }
 }

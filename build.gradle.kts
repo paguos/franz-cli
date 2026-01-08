@@ -16,6 +16,9 @@ dependencies {
     implementation("com.github.ajalt.clikt:clikt:4.2.2")
     
     testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
+    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("org.assertj:assertj-core:3.25.1")
 }
 
 application {

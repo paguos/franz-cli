@@ -6,8 +6,15 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.choice
+import dev.franz.cli.kafka.KafkaService
+import dev.franz.cli.kafka.model.AclOperation
+import dev.franz.cli.kafka.model.AclPermission
+import dev.franz.cli.kafka.model.PatternType
+import dev.franz.cli.kafka.model.ResourceType
 
-class GetAcl : CliktCommand(
+class GetAcl(
+    private val kafka: KafkaService = KafkaService.getInstance()
+) : CliktCommand(
     name = "acl",
     help = "List Kafka ACLs"
 ) {
@@ -22,17 +29,28 @@ class GetAcl : CliktCommand(
         if (resourceType != null) echo("  Resource Type: $resourceType")
         if (resourceName != null) echo("  Resource Name: $resourceName")
         echo()
+        
+        val resType = resourceType?.let { parseResourceType(it) }
+        val acls = kafka.acls.listAcls(principal, resType, resourceName)
+        
         echo("PRINCIPAL                  RESOURCE TYPE   RESOURCE NAME        OPERATION   PERMISSION")
-        echo("User:admin                 Cluster         kafka-cluster        All         Allow")
-        echo("User:producer-app          Topic           events               Write       Allow")
-        echo("User:producer-app          Topic           events               Describe    Allow")
-        echo("User:consumer-app          Topic           events               Read        Allow")
-        echo("User:consumer-app          Group           consumer-group-1     Read        Allow")
-        echo("User:analytics             Topic           *                    Read        Allow")
+        acls.forEach { acl ->
+            echo("${acl.principal.padEnd(26)} ${acl.resourceType.name.padEnd(15)} ${acl.resourceName.padEnd(20)} ${acl.operation.name.padEnd(11)} ${acl.permission.name}")
+        }
+    }
+    
+    private fun parseResourceType(type: String): ResourceType = when (type) {
+        "topic" -> ResourceType.TOPIC
+        "group" -> ResourceType.GROUP
+        "cluster" -> ResourceType.CLUSTER
+        "transactional-id" -> ResourceType.TRANSACTIONAL_ID
+        else -> ResourceType.TOPIC
     }
 }
 
-class CreateAcl : CliktCommand(
+class CreateAcl(
+    private val kafka: KafkaService = KafkaService.getInstance()
+) : CliktCommand(
     name = "acl",
     help = "Create a Kafka ACL"
 ) {
@@ -52,20 +70,37 @@ class CreateAcl : CliktCommand(
         .default("literal")
 
     override fun run() {
+        val resType = parseResourceType(resourceType)
+        val op = AclOperation.valueOf(operation.uppercase())
+        val perm = AclPermission.valueOf(permission.uppercase())
+        val pattern = if (patternType == "literal") PatternType.LITERAL else PatternType.PREFIXED
+        
+        val acl = kafka.acls.createAcl(principal, resType, resourceName, op, perm, pattern)
+        
         echo("Creating ACL...")
         echo()
-        echo("  Principal:      $principal")
-        echo("  Resource Type:  $resourceType")
-        echo("  Resource Name:  $resourceName")
-        echo("  Pattern Type:   $patternType")
-        echo("  Operation:      $operation")
-        echo("  Permission:     $permission")
+        echo("  Principal:      ${acl.principal}")
+        echo("  Resource Type:  ${acl.resourceType.name.lowercase()}")
+        echo("  Resource Name:  ${acl.resourceName}")
+        echo("  Pattern Type:   ${acl.patternType.name.lowercase()}")
+        echo("  Operation:      ${acl.operation.name}")
+        echo("  Permission:     ${acl.permission.name}")
         echo()
         echo("ACL created successfully.")
     }
+    
+    private fun parseResourceType(type: String): ResourceType = when (type) {
+        "topic" -> ResourceType.TOPIC
+        "group" -> ResourceType.GROUP
+        "cluster" -> ResourceType.CLUSTER
+        "transactional-id" -> ResourceType.TRANSACTIONAL_ID
+        else -> ResourceType.TOPIC
+    }
 }
 
-class DeleteAcl : CliktCommand(
+class DeleteAcl(
+    private val kafka: KafkaService = KafkaService.getInstance()
+) : CliktCommand(
     name = "acl",
     help = "Delete Kafka ACLs"
 ) {
@@ -84,14 +119,33 @@ class DeleteAcl : CliktCommand(
         if (resourceName != null) echo("  Resource Name: $resourceName")
         if (operation != null) echo("  Operation: $operation")
         echo()
-        echo("Found 2 matching ACLs:")
-        echo("  User:producer-app  Topic  events  Write  Allow")
-        echo("  User:producer-app  Topic  events  Describe  Allow")
+        
+        val resType = resourceType?.let { parseResourceType(it) }
+        val op = operation?.let { AclOperation.valueOf(it.uppercase()) }
+        
+        // Preview what would be deleted
+        val matching = kafka.acls.listAcls(principal, resType, resourceName)
+            .filter { op == null || it.operation == op }
+        
+        echo("Found ${matching.size} matching ACLs:")
+        matching.forEach { acl ->
+            echo("  ${acl.principal}  ${acl.resourceType.name}  ${acl.resourceName}  ${acl.operation.name}  ${acl.permission.name}")
+        }
         echo()
+        
         if (force) {
-            echo("Deleted 2 ACLs.")
+            val deleted = kafka.acls.deleteAcls(principal, resType, resourceName, op)
+            echo("Deleted ${deleted.size} ACLs.")
         } else {
             echo("Use --force to confirm deletion.")
         }
+    }
+    
+    private fun parseResourceType(type: String): ResourceType = when (type) {
+        "topic" -> ResourceType.TOPIC
+        "group" -> ResourceType.GROUP
+        "cluster" -> ResourceType.CLUSTER
+        "transactional-id" -> ResourceType.TRANSACTIONAL_ID
+        else -> ResourceType.TOPIC
     }
 }

@@ -5,8 +5,11 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import dev.franz.cli.kafka.KafkaService
 
-class GetTopic : CliktCommand(
+class GetTopic(
+    private val kafka: KafkaService = KafkaService.getInstance()
+) : CliktCommand(
     name = "topic",
     help = "List Kafka topics"
 ) {
@@ -22,38 +25,52 @@ class GetTopic : CliktCommand(
             echo("  Including internal topics")
         }
         echo()
+        
+        val topics = kafka.topics.listTopics(includeInternal = showInternal, pattern = pattern)
+        
         echo("TOPIC                    PARTITIONS   REPLICAS")
-        echo("my-topic                 3            2")
-        echo("another-topic            6            3")
-        echo("events                   12           2")
-        if (showInternal) {
-            echo("__consumer_offsets       50           3")
+        topics.forEach { topic ->
+            echo("${topic.name.padEnd(24)} ${topic.partitions.toString().padEnd(12)} ${topic.replicationFactor}")
         }
     }
 }
 
-class DescribeTopic : CliktCommand(
+class DescribeTopic(
+    private val kafka: KafkaService = KafkaService.getInstance()
+) : CliktCommand(
     name = "topic",
     help = "Show detailed information about a topic"
 ) {
     private val name by argument(help = "Topic name")
 
     override fun run() {
-        echo("Topic: $name")
-        echo("=" .repeat(50))
-        echo("Partitions:        3")
-        echo("Replication:       2")
-        echo("Cleanup Policy:    delete")
-        echo("Retention (ms):    604800000 (7 days)")
+        val topic = kafka.topics.describeTopic(name)
+        
+        if (topic == null) {
+            echo("Topic '$name' not found.", err = true)
+            return
+        }
+        
+        echo("Topic: ${topic.name}")
+        echo("=".repeat(50))
+        echo("Partitions:        ${topic.partitions}")
+        echo("Replication:       ${topic.replicationFactor}")
+        echo("Cleanup Policy:    ${topic.cleanupPolicy}")
+        echo("Retention (ms):    ${topic.retentionMs} (${topic.retentionMs / 86400000} days)")
         echo()
-        echo("Partition Details:")
-        echo("  Partition 0: Leader=1, Replicas=[1,2], ISR=[1,2]")
-        echo("  Partition 1: Leader=2, Replicas=[2,3], ISR=[2,3]")
-        echo("  Partition 2: Leader=3, Replicas=[3,1], ISR=[3,1]")
+        
+        if (topic.partitionDetails.isNotEmpty()) {
+            echo("Partition Details:")
+            topic.partitionDetails.forEach { p ->
+                echo("  Partition ${p.id}: Leader=${p.leader}, Replicas=${p.replicas}, ISR=${p.isr}")
+            }
+        }
     }
 }
 
-class DeleteTopic : CliktCommand(
+class DeleteTopic(
+    private val kafka: KafkaService = KafkaService.getInstance()
+) : CliktCommand(
     name = "topic",
     help = "Delete a Kafka topic"
 ) {
@@ -62,7 +79,12 @@ class DeleteTopic : CliktCommand(
 
     override fun run() {
         if (force) {
-            echo("Deleting topic '$name'...")
+            val deleted = kafka.topics.deleteTopic(name)
+            if (deleted) {
+                echo("Deleted topic '$name'.")
+            } else {
+                echo("Topic '$name' not found.", err = true)
+            }
         } else {
             echo("Would delete topic '$name'. Use --force to confirm.")
         }
