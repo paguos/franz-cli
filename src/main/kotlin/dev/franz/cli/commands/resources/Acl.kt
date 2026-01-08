@@ -12,9 +12,7 @@ import dev.franz.cli.kafka.model.AclPermission
 import dev.franz.cli.kafka.model.PatternType
 import dev.franz.cli.kafka.model.ResourceType
 
-class GetAcl(
-    private val kafka: KafkaService = KafkaService.getInstance()
-) : CliktCommand(
+class GetAcl : CliktCommand(
     name = "acl",
     help = "List Kafka ACLs"
 ) {
@@ -24,6 +22,7 @@ class GetAcl(
     private val resourceName by option("--resource-name", "-n", help = "Filter by resource name")
 
     override fun run() {
+        val kafka = KafkaService.getInstance()
         echo("Listing ACLs...")
         if (principal != null) echo("  Principal: $principal")
         if (resourceType != null) echo("  Resource Type: $resourceType")
@@ -48,9 +47,7 @@ class GetAcl(
     }
 }
 
-class CreateAcl(
-    private val kafka: KafkaService = KafkaService.getInstance()
-) : CliktCommand(
+class CreateAcl : CliktCommand(
     name = "acl",
     help = "Create a Kafka ACL"
 ) {
@@ -70,6 +67,7 @@ class CreateAcl(
         .default("literal")
 
     override fun run() {
+        val kafka = KafkaService.getInstance()
         val resType = parseResourceType(resourceType)
         val op = AclOperation.valueOf(operation.uppercase())
         val perm = AclPermission.valueOf(permission.uppercase())
@@ -98,9 +96,7 @@ class CreateAcl(
     }
 }
 
-class DeleteAcl(
-    private val kafka: KafkaService = KafkaService.getInstance()
-) : CliktCommand(
+class DeleteAcl : CliktCommand(
     name = "acl",
     help = "Delete Kafka ACLs"
 ) {
@@ -113,6 +109,7 @@ class DeleteAcl(
     private val force by option("--force", "-f", help = "Skip confirmation").flag()
 
     override fun run() {
+        val kafka = KafkaService.getInstance()
         echo("Matching ACLs to delete...")
         if (principal != null) echo("  Principal: $principal")
         if (resourceType != null) echo("  Resource Type: $resourceType")

@@ -8,9 +8,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import dev.franz.cli.kafka.KafkaService
 import java.text.NumberFormat
 
-class GetGroup(
-    private val kafka: KafkaService = KafkaService.getInstance()
-) : CliktCommand(
+class GetGroup : CliktCommand(
     name = "group",
     help = "List consumer groups"
 ) {
@@ -18,6 +16,7 @@ class GetGroup(
     private val showEmpty by option("--show-empty", "-e", help = "Include empty groups").flag()
 
     override fun run() {
+        val kafka = KafkaService.getInstance()
         echo("Listing consumer groups...")
         if (pattern != null) {
             echo("  Filter pattern: $pattern")
@@ -38,9 +37,7 @@ class GetGroup(
     }
 }
 
-class DescribeGroup(
-    private val kafka: KafkaService = KafkaService.getInstance()
-) : CliktCommand(
+class DescribeGroup : CliktCommand(
     name = "group",
     help = "Show detailed information about a consumer group"
 ) {
@@ -48,6 +45,7 @@ class DescribeGroup(
     private val showMembers by option("--members", "-m", help = "Show member details").flag()
 
     override fun run() {
+        val kafka = KafkaService.getInstance()
         val group = kafka.groups.describeGroup(name)
         
         if (group == null) {

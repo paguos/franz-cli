@@ -5,9 +5,7 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import dev.franz.cli.kafka.KafkaService
 
-class DescribeCluster(
-    private val kafka: KafkaService = KafkaService.getInstance()
-) : CliktCommand(
+class DescribeCluster : CliktCommand(
     name = "cluster",
     help = "Show Kafka cluster information"
 ) {
@@ -15,6 +13,7 @@ class DescribeCluster(
     private val showHealth by option("--health", "-H", help = "Show cluster health status").flag()
 
     override fun run() {
+        val kafka = KafkaService.getInstance()
         val cluster = kafka.cluster.describeCluster()
         
         echo("Cluster Information")

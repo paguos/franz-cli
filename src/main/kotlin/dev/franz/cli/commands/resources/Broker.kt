@@ -7,15 +7,14 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import dev.franz.cli.kafka.KafkaService
 
-class GetBroker(
-    private val kafka: KafkaService = KafkaService.getInstance()
-) : CliktCommand(
+class GetBroker : CliktCommand(
     name = "broker",
     help = "List Kafka brokers"
 ) {
     private val showConfigs by option("--configs", "-c", help = "Show broker configurations").flag()
 
     override fun run() {
+        val kafka = KafkaService.getInstance()
         echo("Listing brokers...")
         echo()
         
@@ -46,9 +45,7 @@ class GetBroker(
     }
 }
 
-class DescribeBroker(
-    private val kafka: KafkaService = KafkaService.getInstance()
-) : CliktCommand(
+class DescribeBroker : CliktCommand(
     name = "broker",
     help = "Show detailed information about a broker"
 ) {
@@ -56,6 +53,7 @@ class DescribeBroker(
     private val showLogDirs by option("--log-dirs", "-l", help = "Show log directory details").flag()
 
     override fun run() {
+        val kafka = KafkaService.getInstance()
         val broker = kafka.brokers.describeBroker(id)
         
         if (broker == null) {

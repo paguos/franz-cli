@@ -15,10 +15,18 @@ repositories {
 dependencies {
     implementation("com.github.ajalt.clikt:clikt:4.2.2")
     
+    // Kafka client
+    implementation("org.apache.kafka:kafka-clients:4.1.0")
+    
+    // Testing
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
     testImplementation("io.mockk:mockk:1.13.9")
     testImplementation("org.assertj:assertj-core:3.25.1")
+    
+    // Testcontainers for integration tests
+    testImplementation("org.testcontainers:kafka:1.20.4")
+    testImplementation("org.testcontainers:junit-jupiter:1.20.4")
 }
 
 application {

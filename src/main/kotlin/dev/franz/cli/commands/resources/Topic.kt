@@ -7,9 +7,7 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import dev.franz.cli.kafka.KafkaService
 
-class GetTopic(
-    private val kafka: KafkaService = KafkaService.getInstance()
-) : CliktCommand(
+class GetTopic : CliktCommand(
     name = "topic",
     help = "List Kafka topics"
 ) {
@@ -17,6 +15,7 @@ class GetTopic(
     private val showInternal by option("--show-internal", "-i", help = "Include internal topics").flag()
 
     override fun run() {
+        val kafka = KafkaService.getInstance()
         echo("Listing topics...")
         if (pattern != null) {
             echo("  Filter pattern: $pattern")
@@ -35,15 +34,14 @@ class GetTopic(
     }
 }
 
-class DescribeTopic(
-    private val kafka: KafkaService = KafkaService.getInstance()
-) : CliktCommand(
+class DescribeTopic : CliktCommand(
     name = "topic",
     help = "Show detailed information about a topic"
 ) {
     private val name by argument(help = "Topic name")
 
     override fun run() {
+        val kafka = KafkaService.getInstance()
         val topic = kafka.topics.describeTopic(name)
         
         if (topic == null) {
@@ -68,9 +66,7 @@ class DescribeTopic(
     }
 }
 
-class DeleteTopic(
-    private val kafka: KafkaService = KafkaService.getInstance()
-) : CliktCommand(
+class DeleteTopic : CliktCommand(
     name = "topic",
     help = "Delete a Kafka topic"
 ) {
@@ -78,6 +74,7 @@ class DeleteTopic(
     private val force by option("--force", "-f", help = "Skip confirmation").flag()
 
     override fun run() {
+        val kafka = KafkaService.getInstance()
         if (force) {
             val deleted = kafka.topics.deleteTopic(name)
             if (deleted) {

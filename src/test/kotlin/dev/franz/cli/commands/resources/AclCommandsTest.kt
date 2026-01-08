@@ -7,6 +7,10 @@ import dev.franz.cli.kafka.model.AclPermission
 import dev.franz.cli.kafka.model.PatternType
 import dev.franz.cli.kafka.model.ResourceType
 import dev.franz.cli.kafka.repository.AclRepository
+import dev.franz.cli.kafka.repository.mock.MockBrokerRepository
+import dev.franz.cli.kafka.repository.mock.MockClusterRepository
+import dev.franz.cli.kafka.repository.mock.MockGroupRepository
+import dev.franz.cli.kafka.repository.mock.MockTopicRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -27,7 +31,13 @@ class AclCommandsTest {
     @BeforeEach
     fun setUp() {
         aclRepository = mockk()
-        kafkaService = KafkaService(acls = aclRepository)
+        kafkaService = KafkaService(
+            topics = MockTopicRepository(),
+            brokers = MockBrokerRepository(),
+            groups = MockGroupRepository(),
+            acls = aclRepository,
+            cluster = MockClusterRepository()
+        )
         KafkaService.setInstance(kafkaService)
         
         outputStream = ByteArrayOutputStream()
@@ -49,7 +59,7 @@ class AclCommandsTest {
         )
         every { aclRepository.listAcls(null, null, null) } returns acls
         
-        GetAcl(kafkaService).main(emptyArray())
+        GetAcl().main(emptyArray())
         
         val output = outputStream.toString()
         assertThat(output).contains("User:admin")
@@ -66,7 +76,7 @@ class AclCommandsTest {
         )
         every { aclRepository.listAcls("User:producer", null, null) } returns acls
         
-        GetAcl(kafkaService).main(arrayOf("--principal", "User:producer"))
+        GetAcl().main(arrayOf("--principal", "User:producer"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Principal: User:producer")
@@ -81,7 +91,7 @@ class AclCommandsTest {
         )
         every { aclRepository.listAcls(null, ResourceType.TOPIC, null) } returns acls
         
-        GetAcl(kafkaService).main(arrayOf("--resource-type", "topic"))
+        GetAcl().main(arrayOf("--resource-type", "topic"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Resource Type: topic")
@@ -95,7 +105,7 @@ class AclCommandsTest {
             aclRepository.createAcl("User:test-app", ResourceType.TOPIC, "my-topic", AclOperation.WRITE, AclPermission.ALLOW, PatternType.LITERAL) 
         } returns acl
         
-        CreateAcl(kafkaService).main(arrayOf(
+        CreateAcl().main(arrayOf(
             "--principal", "User:test-app",
             "--resource-name", "my-topic",
             "--operation", "Write"
@@ -117,7 +127,7 @@ class AclCommandsTest {
             aclRepository.createAcl("User:app", ResourceType.GROUP, "my-group", AclOperation.READ, AclPermission.DENY, PatternType.PREFIXED) 
         } returns acl
         
-        CreateAcl(kafkaService).main(arrayOf(
+        CreateAcl().main(arrayOf(
             "--principal", "User:app",
             "--resource-type", "group",
             "--resource-name", "my-group",
@@ -139,7 +149,7 @@ class AclCommandsTest {
         )
         every { aclRepository.listAcls("User:producer", null, null) } returns acls
         
-        DeleteAcl(kafkaService).main(arrayOf("--principal", "User:producer"))
+        DeleteAcl().main(arrayOf("--principal", "User:producer"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Found 1 matching ACLs")
@@ -154,7 +164,7 @@ class AclCommandsTest {
         every { aclRepository.listAcls("User:producer", null, null) } returns acls
         every { aclRepository.deleteAcls("User:producer", null, null, null) } returns acls
         
-        DeleteAcl(kafkaService).main(arrayOf("--principal", "User:producer", "--force"))
+        DeleteAcl().main(arrayOf("--principal", "User:producer", "--force"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Deleted 1 ACLs")

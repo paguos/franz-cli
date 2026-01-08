@@ -5,6 +5,9 @@ import dev.franz.cli.kafka.model.ClusterInfo
 import dev.franz.cli.kafka.model.Topic
 import dev.franz.cli.kafka.repository.ClusterRepository
 import dev.franz.cli.kafka.repository.TopicRepository
+import dev.franz.cli.kafka.repository.mock.MockAclRepository
+import dev.franz.cli.kafka.repository.mock.MockBrokerRepository
+import dev.franz.cli.kafka.repository.mock.MockGroupRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -27,7 +30,13 @@ class ClusterCommandsTest {
     fun setUp() {
         clusterRepository = mockk()
         topicRepository = mockk()
-        kafkaService = KafkaService(cluster = clusterRepository, topics = topicRepository)
+        kafkaService = KafkaService(
+            topics = topicRepository,
+            brokers = MockBrokerRepository(),
+            groups = MockGroupRepository(),
+            acls = MockAclRepository(),
+            cluster = clusterRepository
+        )
         KafkaService.setInstance(kafkaService)
         
         outputStream = ByteArrayOutputStream()
@@ -55,7 +64,7 @@ class ClusterCommandsTest {
         )
         every { clusterRepository.describeCluster() } returns cluster
         
-        DescribeCluster(kafkaService).main(emptyArray())
+        DescribeCluster().main(emptyArray())
         
         val output = outputStream.toString()
         assertThat(output).contains("Cluster Information")
@@ -83,7 +92,7 @@ class ClusterCommandsTest {
         )
         every { clusterRepository.describeCluster() } returns cluster
         
-        DescribeCluster(kafkaService).main(arrayOf("--health"))
+        DescribeCluster().main(arrayOf("--health"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Health Status:")
@@ -110,7 +119,7 @@ class ClusterCommandsTest {
         )
         every { clusterRepository.describeCluster() } returns cluster
         
-        DescribeCluster(kafkaService).main(arrayOf("--health"))
+        DescribeCluster().main(arrayOf("--health"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Under-replicated Partitions: 5")
@@ -137,7 +146,7 @@ class ClusterCommandsTest {
         every { clusterRepository.describeCluster() } returns cluster
         every { topicRepository.listTopics(includeInternal = true, pattern = null) } returns topics
         
-        DescribeCluster(kafkaService).main(arrayOf("--topics"))
+        DescribeCluster().main(arrayOf("--topics"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Topic Summary:")

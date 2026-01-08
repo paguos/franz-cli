@@ -5,6 +5,10 @@ import dev.franz.cli.kafka.model.ConsumerGroup
 import dev.franz.cli.kafka.model.GroupMember
 import dev.franz.cli.kafka.model.TopicSubscription
 import dev.franz.cli.kafka.repository.GroupRepository
+import dev.franz.cli.kafka.repository.mock.MockAclRepository
+import dev.franz.cli.kafka.repository.mock.MockBrokerRepository
+import dev.franz.cli.kafka.repository.mock.MockClusterRepository
+import dev.franz.cli.kafka.repository.mock.MockTopicRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -27,7 +31,13 @@ class GroupCommandsTest {
     @BeforeEach
     fun setUp() {
         groupRepository = mockk()
-        kafkaService = KafkaService(groups = groupRepository)
+        kafkaService = KafkaService(
+            topics = MockTopicRepository(),
+            brokers = MockBrokerRepository(),
+            groups = groupRepository,
+            acls = MockAclRepository(),
+            cluster = MockClusterRepository()
+        )
         KafkaService.setInstance(kafkaService)
         
         outputStream = ByteArrayOutputStream()
@@ -60,7 +70,7 @@ class GroupCommandsTest {
         )
         every { groupRepository.listGroups(includeEmpty = false, pattern = null) } returns groups
         
-        GetGroup(kafkaService).main(emptyArray())
+        GetGroup().main(emptyArray())
         
         val output = outputStream.toString()
         assertThat(output).contains("my-consumer-group")
@@ -79,7 +89,7 @@ class GroupCommandsTest {
         )
         every { groupRepository.listGroups(includeEmpty = true, pattern = null) } returns groups
         
-        GetGroup(kafkaService).main(arrayOf("--show-empty"))
+        GetGroup().main(arrayOf("--show-empty"))
         
         val output = outputStream.toString()
         assertThat(output).contains("empty-group")
@@ -102,7 +112,7 @@ class GroupCommandsTest {
         )
         every { groupRepository.describeGroup("my-consumer-group") } returns group
         
-        DescribeGroup(kafkaService).main(arrayOf("my-consumer-group"))
+        DescribeGroup().main(arrayOf("my-consumer-group"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Consumer Group: my-consumer-group")
@@ -125,7 +135,7 @@ class GroupCommandsTest {
         )
         every { groupRepository.describeGroup("my-group") } returns group
         
-        DescribeGroup(kafkaService).main(arrayOf("my-group", "--members"))
+        DescribeGroup().main(arrayOf("my-group", "--members"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Members:")
@@ -138,7 +148,7 @@ class GroupCommandsTest {
     fun `DescribeGroup shows error for non-existent group`() {
         every { groupRepository.describeGroup("non-existent") } returns null
         
-        DescribeGroup(kafkaService).main(arrayOf("non-existent"))
+        DescribeGroup().main(arrayOf("non-existent"))
         
         val output = getAllOutput()
         assertThat(output).contains("not found")

@@ -4,6 +4,10 @@ import dev.franz.cli.kafka.KafkaService
 import dev.franz.cli.kafka.model.Broker
 import dev.franz.cli.kafka.model.LogDir
 import dev.franz.cli.kafka.repository.BrokerRepository
+import dev.franz.cli.kafka.repository.mock.MockAclRepository
+import dev.franz.cli.kafka.repository.mock.MockClusterRepository
+import dev.franz.cli.kafka.repository.mock.MockGroupRepository
+import dev.franz.cli.kafka.repository.mock.MockTopicRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -26,7 +30,13 @@ class BrokerCommandsTest {
     @BeforeEach
     fun setUp() {
         brokerRepository = mockk()
-        kafkaService = KafkaService(brokers = brokerRepository)
+        kafkaService = KafkaService(
+            topics = MockTopicRepository(),
+            brokers = brokerRepository,
+            groups = MockGroupRepository(),
+            acls = MockAclRepository(),
+            cluster = MockClusterRepository()
+        )
         KafkaService.setInstance(kafkaService)
         
         outputStream = ByteArrayOutputStream()
@@ -56,7 +66,7 @@ class BrokerCommandsTest {
         every { brokerRepository.listBrokers() } returns brokers
         every { brokerRepository.getControllerId() } returns 1
         
-        GetBroker(kafkaService).main(emptyArray())
+        GetBroker().main(emptyArray())
         
         val output = outputStream.toString()
         assertThat(output).contains("broker-1.kafka")
@@ -82,7 +92,7 @@ class BrokerCommandsTest {
         every { brokerRepository.listBrokers() } returns brokers
         every { brokerRepository.getControllerId() } returns 1
         
-        GetBroker(kafkaService).main(arrayOf("--configs"))
+        GetBroker().main(arrayOf("--configs"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Common Broker Configs:")
@@ -102,7 +112,7 @@ class BrokerCommandsTest {
         )
         every { brokerRepository.describeBroker(1) } returns broker
         
-        DescribeBroker(kafkaService).main(arrayOf("1"))
+        DescribeBroker().main(arrayOf("1"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Broker: 1")
@@ -125,7 +135,7 @@ class BrokerCommandsTest {
         )
         every { brokerRepository.describeBroker(1) } returns broker
         
-        DescribeBroker(kafkaService).main(arrayOf("1", "--log-dirs"))
+        DescribeBroker().main(arrayOf("1", "--log-dirs"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Log Directories:")
@@ -138,7 +148,7 @@ class BrokerCommandsTest {
     fun `DescribeBroker shows error for non-existent broker`() {
         every { brokerRepository.describeBroker(999) } returns null
         
-        DescribeBroker(kafkaService).main(arrayOf("999"))
+        DescribeBroker().main(arrayOf("999"))
         
         val output = getAllOutput()
         assertThat(output).contains("not found")

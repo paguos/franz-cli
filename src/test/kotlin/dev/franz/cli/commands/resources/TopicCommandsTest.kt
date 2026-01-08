@@ -4,6 +4,10 @@ import dev.franz.cli.kafka.KafkaService
 import dev.franz.cli.kafka.model.Partition
 import dev.franz.cli.kafka.model.Topic
 import dev.franz.cli.kafka.repository.TopicRepository
+import dev.franz.cli.kafka.repository.mock.MockAclRepository
+import dev.franz.cli.kafka.repository.mock.MockBrokerRepository
+import dev.franz.cli.kafka.repository.mock.MockClusterRepository
+import dev.franz.cli.kafka.repository.mock.MockGroupRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -26,7 +30,13 @@ class TopicCommandsTest {
     @BeforeEach
     fun setUp() {
         topicRepository = mockk()
-        kafkaService = KafkaService(topics = topicRepository)
+        kafkaService = KafkaService(
+            topics = topicRepository,
+            brokers = MockBrokerRepository(),
+            groups = MockGroupRepository(),
+            acls = MockAclRepository(),
+            cluster = MockClusterRepository()
+        )
         KafkaService.setInstance(kafkaService)
         
         outputStream = ByteArrayOutputStream()
@@ -54,7 +64,7 @@ class TopicCommandsTest {
         )
         every { topicRepository.listTopics(includeInternal = false, pattern = null) } returns topics
         
-        GetTopic(kafkaService).main(emptyArray())
+        GetTopic().main(emptyArray())
         
         val output = outputStream.toString()
         assertThat(output).contains("test-topic-1")
@@ -69,7 +79,7 @@ class TopicCommandsTest {
         val topics = listOf(Topic("events", 12, 2))
         every { topicRepository.listTopics(includeInternal = false, pattern = "events") } returns topics
         
-        GetTopic(kafkaService).main(arrayOf("events"))
+        GetTopic().main(arrayOf("events"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Filter pattern: events")
@@ -85,7 +95,7 @@ class TopicCommandsTest {
         )
         every { topicRepository.listTopics(includeInternal = true, pattern = null) } returns topics
         
-        GetTopic(kafkaService).main(arrayOf("--show-internal"))
+        GetTopic().main(arrayOf("--show-internal"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Including internal topics")
@@ -108,7 +118,7 @@ class TopicCommandsTest {
         )
         every { topicRepository.describeTopic("my-topic") } returns topic
         
-        DescribeTopic(kafkaService).main(arrayOf("my-topic"))
+        DescribeTopic().main(arrayOf("my-topic"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Topic: my-topic")
@@ -123,7 +133,7 @@ class TopicCommandsTest {
     fun `DescribeTopic shows error for non-existent topic`() {
         every { topicRepository.describeTopic("non-existent") } returns null
         
-        DescribeTopic(kafkaService).main(arrayOf("non-existent"))
+        DescribeTopic().main(arrayOf("non-existent"))
         
         val output = getAllOutput()
         assertThat(output).contains("not found")
@@ -131,7 +141,7 @@ class TopicCommandsTest {
     
     @Test
     fun `DeleteTopic without force shows confirmation message`() {
-        DeleteTopic(kafkaService).main(arrayOf("my-topic"))
+        DeleteTopic().main(arrayOf("my-topic"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Would delete topic 'my-topic'")
@@ -142,7 +152,7 @@ class TopicCommandsTest {
     fun `DeleteTopic with force deletes topic`() {
         every { topicRepository.deleteTopic("my-topic") } returns true
         
-        DeleteTopic(kafkaService).main(arrayOf("my-topic", "--force"))
+        DeleteTopic().main(arrayOf("my-topic", "--force"))
         
         val output = outputStream.toString()
         assertThat(output).contains("Deleted topic 'my-topic'")
