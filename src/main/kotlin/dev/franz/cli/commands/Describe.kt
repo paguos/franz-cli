@@ -2,6 +2,8 @@ package dev.franz.cli.commands
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
+import dev.franz.cli.commands.resources.DescribeBroker
+import dev.franz.cli.commands.resources.DescribeCluster
 import dev.franz.cli.commands.resources.DescribeGroup
 import dev.franz.cli.commands.resources.DescribeTopic
 
@@ -12,7 +14,9 @@ class Describe : CliktCommand(
     init {
         subcommands(
             DescribeTopic(),
-            DescribeGroup()
+            DescribeGroup(),
+            DescribeBroker(),
+            DescribeCluster()
         )
     }
 

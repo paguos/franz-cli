@@ -2,6 +2,7 @@ package dev.franz.cli.commands
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
+import dev.franz.cli.commands.resources.DeleteAcl
 import dev.franz.cli.commands.resources.DeleteTopic
 
 class Delete : CliktCommand(
@@ -10,7 +11,8 @@ class Delete : CliktCommand(
 ) {
     init {
         subcommands(
-            DeleteTopic()
+            DeleteTopic(),
+            DeleteAcl()
         )
     }
 
