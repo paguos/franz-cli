@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "1.9.22"
+    kotlin("plugin.serialization") version "1.9.22"
     application
     id("org.graalvm.buildtools.native") version "0.10.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
@@ -17,6 +18,10 @@ dependencies {
     
     // Kafka client
     implementation("org.apache.kafka:kafka-clients:4.1.0")
+    
+    // YAML configuration (kotlinx.serialization + kaml)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.2")
+    implementation("com.charleskorn.kaml:kaml:0.56.0")
     
     // Testing
     testImplementation(kotlin("test"))
@@ -51,6 +56,9 @@ graalvmNative {
 
 tasks.test {
     useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
 }
 
 tasks.jar {

@@ -1,5 +1,7 @@
 package dev.franz.cli.kafka
 
+import dev.franz.cli.config.ConfigManager
+import dev.franz.cli.config.KafkaPropertiesBuilder
 import dev.franz.cli.kafka.repository.AclRepository
 import dev.franz.cli.kafka.repository.BrokerRepository
 import dev.franz.cli.kafka.repository.ClusterRepository
@@ -16,7 +18,6 @@ import dev.franz.cli.kafka.repository.mock.MockClusterRepository
 import dev.franz.cli.kafka.repository.mock.MockGroupRepository
 import dev.franz.cli.kafka.repository.mock.MockTopicRepository
 import org.apache.kafka.clients.admin.AdminClient
-import org.apache.kafka.clients.admin.AdminClientConfig
 import java.util.Properties
 
 /**
@@ -53,11 +54,24 @@ class KafkaService(
         }
         
         /**
-         * Configure KafkaService to connect to a real Kafka cluster.
+         * Configure KafkaService from a named context.
+         * Uses the current context if contextName is null.
+         * 
+         * @param contextName Name of the context to use, or null for current context
+         * @param configManager ConfigManager instance (for testing)
+         * @param propertiesBuilder KafkaPropertiesBuilder instance (for testing)
          */
-        fun configure(bootstrapServers: String) {
+        fun configureFromContext(
+            contextName: String?,
+            configManager: ConfigManager = ConfigManager(),
+            propertiesBuilder: KafkaPropertiesBuilder = KafkaPropertiesBuilder()
+        ) {
             instance?.close()
-            instance = createRealService(bootstrapServers)
+            
+            val resolvedContext = configManager.resolveContext(contextName)
+            val props = propertiesBuilder.build(resolvedContext)
+            
+            instance = createRealService(props)
         }
         
         /**
@@ -91,12 +105,7 @@ class KafkaService(
             )
         }
         
-        private fun createRealService(bootstrapServers: String): KafkaService {
-            val props = Properties().apply {
-                put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
-                put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, 10000)
-                put(AdminClientConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, 30000)
-            }
+        private fun createRealService(props: Properties): KafkaService {
             val adminClient = AdminClient.create(props)
             
             return KafkaService(
