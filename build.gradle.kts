@@ -55,7 +55,28 @@ graalvmNative {
 }
 
 tasks.test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        // Optional: control tags from the command line without relying on Gradle CLI options.
+        // Example:
+        //   ./gradlew test -PexcludeTags=integration
+        //   ./gradlew test -PincludeTags=integration
+        val includeTagsProp = (project.findProperty("includeTags") as String?)
+            ?.split(",")
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.toSet()
+            ?: emptySet()
+
+        val excludeTagsProp = (project.findProperty("excludeTags") as String?)
+            ?.split(",")
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.toSet()
+            ?: emptySet()
+
+        if (includeTagsProp.isNotEmpty()) includeTags(*includeTagsProp.toTypedArray())
+        if (excludeTagsProp.isNotEmpty()) excludeTags(*excludeTagsProp.toTypedArray())
+    }
     testLogging {
         events("passed", "skipped", "failed")
     }

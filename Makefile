@@ -1,5 +1,17 @@
 .PHONY: help build test test-unit test-integration run clean native install kafka-up kafka-down kafka-logs
 
+# Optional flags:
+# - RERUN=1: force Gradle to re-run tasks (including tests) even if up-to-date
+# - NO_CACHE=1: disable Gradle build cache (prevents FROM-CACHE results)
+GRADLEW ?= ./gradlew
+GRADLE_FLAGS :=
+ifeq ($(RERUN),1)
+GRADLE_FLAGS += --rerun-tasks
+endif
+ifeq ($(NO_CACHE),1)
+GRADLE_FLAGS += --no-build-cache
+endif
+
 # Default target
 help:
 	@echo "Franz CLI - Available targets:"
@@ -24,20 +36,20 @@ help:
 
 # Compile the project
 build:
-	./gradlew compileKotlin
+	$(GRADLEW) $(GRADLE_FLAGS) compileKotlin
 
 # Run all tests
 test:
-	./gradlew test
+	$(GRADLEW) $(GRADLE_FLAGS) test
 
 # Run the CLI with arguments
 # Usage: make run ARGS='get topic'
 run:
-	./gradlew run --args="$(ARGS)" -q
+	$(GRADLEW) run --args="$(ARGS)" -q
 
 # Build native binary
 native:
-	./gradlew nativeCompile
+	$(GRADLEW) $(GRADLE_FLAGS) nativeCompile
 
 # Run native binary with arguments
 # Usage: make native-run ARGS='get topic'
@@ -50,7 +62,7 @@ native-run:
 
 # Clean build artifacts
 clean:
-	./gradlew clean
+	$(GRADLEW) $(GRADLE_FLAGS) clean
 
 # Install dependencies via asdf
 install:
@@ -73,8 +85,8 @@ kafka-logs:
 
 # Run unit tests only
 test-unit:
-	./gradlew test --tests '*Test' --exclude-tags integration
+	$(GRADLEW) $(GRADLE_FLAGS) test --tests '*Test' -PexcludeTags=integration
 
 # Run integration tests only
 test-integration:
-	./gradlew test --tests '*IT'
+	$(GRADLEW) $(GRADLE_FLAGS) test --tests '*IT' -PincludeTags=integration
