@@ -19,7 +19,8 @@ data class ResolvedContext(
     val bootstrapServers: String,
     val securityProtocol: SecurityProtocol,
     val sasl: SaslConfig? = null,
-    val ssl: SslConfig? = null
+    val ssl: SslConfig? = null,
+    val kafkaProperties: Map<String, String> = emptyMap()
 )
 
 /**
@@ -136,7 +137,8 @@ class ConfigManager(
             bootstrapServers = cluster.bootstrapServers,
             securityProtocol = authConfig?.securityProtocol ?: SecurityProtocol.PLAINTEXT,
             sasl = authConfig?.sasl,
-            ssl = authConfig?.ssl
+            ssl = authConfig?.ssl,
+            kafkaProperties = authConfig?.kafkaProperties ?: emptyMap()
         )
     }
     

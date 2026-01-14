@@ -5,6 +5,7 @@ import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.common.config.SaslConfigs
 import org.apache.kafka.common.config.SslConfigs
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -119,6 +120,52 @@ class KafkaPropertiesBuilderTest {
             
             assertThat(props[SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG])
                 .isEqualTo("PKCS12")
+        }
+        
+        @Test
+        fun `builds properties for SSL with PEM files`() {
+            val caFile = tempDir.resolve("ca.crt").toFile().apply { writeText("-----BEGIN CERTIFICATE-----\nCA\n-----END CERTIFICATE-----\n") }
+            val clientCrt = tempDir.resolve("client.crt").toFile().apply { writeText("-----BEGIN CERTIFICATE-----\nCLIENT\n-----END CERTIFICATE-----\n") }
+            val clientKey = tempDir.resolve("client.key").toFile().apply { writeText("-----BEGIN PRIVATE KEY-----\nKEY\n-----END PRIVATE KEY-----\n") }
+            
+            val context = ResolvedContext(
+                contextName = "prod",
+                bootstrapServers = "kafka:9093",
+                securityProtocol = SecurityProtocol.SSL,
+                ssl = SslConfig(
+                    caFile = caFile.absolutePath,
+                    clientFile = clientCrt.absolutePath,
+                    clientKeyFile = clientKey.absolutePath
+                )
+            )
+            
+            val props = builder.build(context)
+            
+            assertThat(props[CommonClientConfigs.SECURITY_PROTOCOL_CONFIG]).isEqualTo("SSL")
+            assertThat(props[SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG]).isEqualTo("PEM")
+            assertThat(props["ssl.truststore.certificates"].toString()).contains("BEGIN CERTIFICATE")
+            assertThat(props[SslConfigs.SSL_KEYSTORE_TYPE_CONFIG]).isEqualTo("PEM")
+            assertThat(props["ssl.keystore.certificate.chain"].toString()).contains("BEGIN CERTIFICATE")
+            assertThat(props["ssl.keystore.key"].toString()).contains("BEGIN PRIVATE KEY")
+        }
+        
+        @Test
+        fun `rejects mixing PEM config with keystore config`() {
+            val caFile = tempDir.resolve("ca.crt").toFile().apply { writeText("CA") }
+            
+            val context = ResolvedContext(
+                contextName = "prod",
+                bootstrapServers = "kafka:9093",
+                securityProtocol = SecurityProtocol.SSL,
+                ssl = SslConfig(
+                    caFile = caFile.absolutePath,
+                    truststoreLocation = "/etc/kafka/truststore.jks"
+                )
+            )
+            
+            assertThatThrownBy { builder.build(context) }
+                .isInstanceOf(ConfigException::class.java)
+                .hasMessageContaining("cannot be combined")
         }
     }
     
@@ -334,6 +381,24 @@ class KafkaPropertiesBuilderTest {
             
             assertThat(props["request.timeout.ms"]).isEqualTo(10000)
             assertThat(props["default.api.timeout.ms"]).isEqualTo(30000)
+        }
+        
+        @Test
+        fun `applies kafka-properties passthrough as last-wins`() {
+            val context = ResolvedContext(
+                contextName = "dev",
+                bootstrapServers = "localhost:9092",
+                securityProtocol = SecurityProtocol.PLAINTEXT,
+                kafkaProperties = mapOf(
+                    "request.timeout.ms" to "111",
+                    "ssl.endpoint.identification.algorithm" to ""
+                )
+            )
+            
+            val props = builder.build(context)
+            
+            assertThat(props["request.timeout.ms"]).isEqualTo("111")
+            assertThat(props["ssl.endpoint.identification.algorithm"]).isEqualTo("")
         }
     }
 }

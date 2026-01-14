@@ -194,7 +194,7 @@ class ConfigManagerTest {
             val resolved = configManager.resolveContext("dev")
             
             assertThat(resolved).isNotNull
-            assertThat(resolved!!.contextName).isEqualTo("dev")
+            assertThat(resolved.contextName).isEqualTo("dev")
             assertThat(resolved.bootstrapServers).isEqualTo("localhost:9092")
             assertThat(resolved.securityProtocol).isEqualTo(SecurityProtocol.PLAINTEXT)
         }
@@ -215,7 +215,7 @@ class ConfigManagerTest {
             val resolved = configManager.resolveContext("dev")
             
             assertThat(resolved).isNotNull
-            assertThat(resolved!!.securityProtocol).isEqualTo(SecurityProtocol.PLAINTEXT)
+            assertThat(resolved.securityProtocol).isEqualTo(SecurityProtocol.PLAINTEXT)
             assertThat(resolved.sasl).isNull()
             assertThat(resolved.ssl).isNull()
         }
@@ -237,7 +237,7 @@ class ConfigManagerTest {
             val resolved = configManager.resolveContext(null)
             
             assertThat(resolved).isNotNull
-            assertThat(resolved!!.contextName).isEqualTo("dev")
+            assertThat(resolved.contextName).isEqualTo("dev")
         }
         
         @Test

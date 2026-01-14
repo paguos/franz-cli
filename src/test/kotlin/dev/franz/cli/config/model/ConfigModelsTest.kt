@@ -362,6 +362,47 @@ class ConfigModelsTest {
             
             assertThat(auth.ssl!!.truststoreType).isEqualTo("PKCS12")
         }
+        
+        @Test
+        fun `parses SSL config with PEM files`() {
+            val yaml = """
+                name: test
+                security-protocol: SSL
+                ssl:
+                  cafile: /etc/kafka/ca.crt
+                  clientfile: /etc/kafka/client.crt
+                  clientkeyfile: /etc/kafka/client.key
+            """.trimIndent()
+            
+            val auth = Yaml.default.decodeFromString<AuthConfigEntry>(yaml)
+            
+            assertThat(auth.ssl).isNotNull
+            assertThat(auth.ssl!!.caFile).isEqualTo("/etc/kafka/ca.crt")
+            assertThat(auth.ssl!!.clientFile).isEqualTo("/etc/kafka/client.crt")
+            assertThat(auth.ssl!!.clientKeyFile).isEqualTo("/etc/kafka/client.key")
+        }
+    }
+    
+    @Nested
+    @DisplayName("Kafka properties passthrough")
+    inner class KafkaPropertiesTest {
+        
+        @Test
+        fun `parses kafka-properties map`() {
+            val yaml = """
+                name: test
+                security-protocol: SSL
+                kafka-properties:
+                  ssl.endpoint.identification.algorithm: ""
+                  request.timeout.ms: "12345"
+            """.trimIndent()
+            
+            val auth = Yaml.default.decodeFromString<AuthConfigEntry>(yaml)
+            
+            assertThat(auth.kafkaProperties)
+                .containsEntry("ssl.endpoint.identification.algorithm", "")
+                .containsEntry("request.timeout.ms", "12345")
+        }
     }
     
     @Nested

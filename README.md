@@ -114,6 +114,24 @@ auth-configs:
     ssl:
       truststore-location: /path/to/truststore.jks
       truststore-password: changeit
+
+# PEM SSL (cafile/clientfile/clientkeyfile)
+  - name: arn-ssl
+    security-protocol: SSL
+    ssl:
+      cafile: /Users/kdzd/.kaf/arn.ca.crt
+      clientfile: /Users/kdzd/.kaf/arn.kaf-user.user.crt
+      clientkeyfile: /Users/kdzd/.kaf/arn.kaf-user.user.key
+
+# Advanced Kafka client overrides (escape hatch)
+  - name: arn-ssl-advanced
+    security-protocol: SSL
+    ssl:
+      cafile: /Users/kdzd/.kaf/arn.ca.crt
+      clientfile: /Users/kdzd/.kaf/arn.kaf-user.user.crt
+      clientkeyfile: /Users/kdzd/.kaf/arn.kaf-user.user.key
+    kafka-properties:
+      ssl.endpoint.identification.algorithm: ""
 ```
 
 ### Configuration Commands
