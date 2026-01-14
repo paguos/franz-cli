@@ -6,7 +6,16 @@ import dev.franz.cli.commands.resources.CreateAcl
 
 class Create : CliktCommand(
     name = "create",
-    help = "Create resources"
+    help = """
+        Create Kafka resources.
+
+        Examples:
+        ```
+        franz create acl --principal User:alice --resource-type topic --resource-name my-topic --operation Read --permission Allow
+        ```
+    """.trimIndent(),
+    invokeWithoutSubcommand = true,
+    printHelpOnEmptyArgs = true
 ) {
     init {
         subcommands(

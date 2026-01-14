@@ -9,7 +9,16 @@ import dev.franz.cli.kafka.KafkaService
 
 class GetTopic : CliktCommand(
     name = "topic",
-    help = "List Kafka topics"
+    help = """
+        List Kafka topics.
+
+        Examples:
+        ```
+        franz get topic
+        franz get topic payments-*
+        franz get topic --show-internal
+        ```
+    """.trimIndent()
 ) {
     private val pattern by argument(help = "Optional topic name pattern to filter").optional()
     private val showInternal by option("--show-internal", "-i", help = "Include internal topics").flag()
@@ -36,7 +45,14 @@ class GetTopic : CliktCommand(
 
 class DescribeTopic : CliktCommand(
     name = "topic",
-    help = "Show detailed information about a topic"
+    help = """
+        Show detailed information about a topic.
+
+        Examples:
+        ```
+        franz describe topic my-topic
+        ```
+    """.trimIndent()
 ) {
     private val name by argument(help = "Topic name")
 
@@ -68,7 +84,14 @@ class DescribeTopic : CliktCommand(
 
 class DeleteTopic : CliktCommand(
     name = "topic",
-    help = "Delete a Kafka topic"
+    help = """
+        Delete a Kafka topic.
+
+        Examples:
+        ```
+        franz delete topic my-topic --force
+        ```
+    """.trimIndent()
 ) {
     private val name by argument(help = "Topic name to delete")
     private val force by option("--force", "-f", help = "Skip confirmation").flag()

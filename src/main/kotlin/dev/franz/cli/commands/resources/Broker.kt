@@ -9,7 +9,15 @@ import dev.franz.cli.kafka.KafkaService
 
 class GetBroker : CliktCommand(
     name = "broker",
-    help = "List Kafka brokers"
+    help = """
+        List Kafka brokers.
+
+        Examples:
+        ```
+        franz get broker
+        franz get broker --configs
+        ```
+    """.trimIndent()
 ) {
     private val showConfigs by option("--configs", "-c", help = "Show broker configurations").flag()
 
@@ -47,7 +55,15 @@ class GetBroker : CliktCommand(
 
 class DescribeBroker : CliktCommand(
     name = "broker",
-    help = "Show detailed information about a broker"
+    help = """
+        Show detailed information about a broker.
+
+        Examples:
+        ```
+        franz describe broker 1
+        franz describe broker 1 --log-dirs
+        ```
+    """.trimIndent()
 ) {
     private val id by argument(help = "Broker ID").int()
     private val showLogDirs by option("--log-dirs", "-l", help = "Show log directory details").flag()

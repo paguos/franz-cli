@@ -11,7 +11,15 @@ class SetContext(
     private val configManager: ConfigManager = ConfigManager()
 ) : CliktCommand(
     name = "set-context",
-    help = "Create or update a context"
+    help = """
+        Create or update a context (ties a name to a cluster + optional auth config).
+
+        Examples:
+        ```
+        franz config set-context local --cluster local
+        franz config set-context prod --cluster prod --auth prod-sasl
+        ```
+    """.trimIndent()
 ) {
     private val name by argument(help = "Name of the context")
     private val cluster by option("--cluster", "-c", help = "Cluster name to reference").required()

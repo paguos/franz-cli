@@ -10,7 +10,16 @@ import java.text.NumberFormat
 
 class GetGroup : CliktCommand(
     name = "group",
-    help = "List consumer groups"
+    help = """
+        List Kafka consumer groups.
+
+        Examples:
+        ```
+        franz get group
+        franz get group payments-*
+        franz get group --show-empty
+        ```
+    """.trimIndent()
 ) {
     private val pattern by argument(help = "Optional group name pattern to filter").optional()
     private val showEmpty by option("--show-empty", "-e", help = "Include empty groups").flag()
@@ -39,7 +48,15 @@ class GetGroup : CliktCommand(
 
 class DescribeGroup : CliktCommand(
     name = "group",
-    help = "Show detailed information about a consumer group"
+    help = """
+        Show detailed information about a Kafka consumer group.
+
+        Examples:
+        ```
+        franz describe group my-group
+        franz describe group my-group --members
+        ```
+    """.trimIndent()
 ) {
     private val name by argument(help = "Consumer group name")
     private val showMembers by option("--members", "-m", help = "Show member details").flag()

@@ -8,7 +8,14 @@ class UseContext(
     private val configManager: ConfigManager = ConfigManager()
 ) : CliktCommand(
     name = "use-context",
-    help = "Set the current context"
+    help = """
+        Set the current context.
+
+        Examples:
+        ```
+        franz config use-context local
+        ```
+    """.trimIndent()
 ) {
     private val name by argument(help = "Name of the context to use")
     

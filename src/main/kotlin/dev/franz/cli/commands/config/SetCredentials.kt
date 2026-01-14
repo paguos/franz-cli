@@ -12,7 +12,19 @@ class SetCredentials(
     private val configManager: ConfigManager = ConfigManager()
 ) : CliktCommand(
     name = "set-credentials",
-    help = "Create or update authentication credentials"
+    help = """
+        Create or update authentication credentials.
+
+        Notes:
+          - For SASL, set `--sasl-mechanism` and the matching fields (e.g. `--username` / `--password`).
+          - For SSL/mTLS, provide truststore/keystore options as needed.
+
+        Examples:
+        ```
+        franz config set-credentials local --security-protocol PLAINTEXT
+        franz config set-credentials prod --security-protocol SASL_SSL --sasl-mechanism SCRAM-SHA-512 --username alice --password-file ./pw.txt
+        ```
+    """.trimIndent()
 ) {
     private val name by argument(help = "Name of the auth configuration")
     

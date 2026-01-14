@@ -7,7 +7,16 @@ import dev.franz.cli.kafka.KafkaService
 
 class DescribeCluster : CliktCommand(
     name = "cluster",
-    help = "Show Kafka cluster information"
+    help = """
+        Show Kafka cluster information.
+
+        Examples:
+        ```
+        franz describe cluster
+        franz describe cluster --health
+        franz describe cluster --topics
+        ```
+    """.trimIndent()
 ) {
     private val showTopics by option("--topics", "-t", help = "Include topic summary").flag()
     private val showHealth by option("--health", "-H", help = "Show cluster health status").flag()

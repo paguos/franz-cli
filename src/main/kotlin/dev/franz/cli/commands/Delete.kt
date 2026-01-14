@@ -7,7 +7,17 @@ import dev.franz.cli.commands.resources.DeleteTopic
 
 class Delete : CliktCommand(
     name = "delete",
-    help = "Delete resources"
+    help = """
+        Delete Kafka resources.
+
+        Examples:
+        ```
+        franz delete topic my-topic --force
+        franz delete acl --principal User:alice --resource-type topic --resource-name my-topic --operation Read --force
+        ```
+    """.trimIndent(),
+    invokeWithoutSubcommand = true,
+    printHelpOnEmptyArgs = true
 ) {
     init {
         subcommands(
