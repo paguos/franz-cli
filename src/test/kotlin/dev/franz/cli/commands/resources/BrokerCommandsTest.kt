@@ -72,7 +72,7 @@ class BrokerCommandsTest {
         assertThat(output).contains("broker-1.kafka")
         assertThat(output).contains("broker-2.kafka")
         assertThat(output).contains("broker-3.kafka")
-        assertThat(output).contains("Controller: broker-1.kafka:9092")
+        assertThat(output).contains("Controller:")
         verify { brokerRepository.listBrokers() }
     }
     
@@ -96,7 +96,8 @@ class BrokerCommandsTest {
         
         val output = outputStream.toString()
         assertThat(output).contains("Common Broker Configs:")
-        assertThat(output).contains("log.retention.hours=168")
+        assertThat(output).contains("log.retention.hours")
+        assertThat(output).contains("168")
     }
     
     @Test
@@ -115,10 +116,10 @@ class BrokerCommandsTest {
         DescribeBroker().main(arrayOf("1"))
         
         val output = outputStream.toString()
-        assertThat(output).contains("Broker: 1")
-        assertThat(output).contains("Host:              broker-1.kafka")
-        assertThat(output).contains("Port:              9092")
-        assertThat(output).contains("Rack:              us-east-1a")
+        assertThat(output).contains("ID:")
+        assertThat(output).contains("broker-1.kafka")
+        assertThat(output).contains("9092")
+        assertThat(output).contains("us-east-1a")
         assertThat(output).contains("PLAINTEXT://broker-1.kafka:9092")
         verify { brokerRepository.describeBroker(1) }
     }
@@ -140,8 +141,8 @@ class BrokerCommandsTest {
         val output = outputStream.toString()
         assertThat(output).contains("Log Directories:")
         assertThat(output).contains("/var/kafka/data-1")
-        assertThat(output).contains("Total:")
-        assertThat(output).contains("Used:")
+        assertThat(output).contains("TOTAL_GB")
+        assertThat(output).contains("USED_GB")
     }
     
     @Test

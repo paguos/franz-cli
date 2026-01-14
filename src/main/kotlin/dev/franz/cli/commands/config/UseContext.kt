@@ -1,12 +1,12 @@
 package dev.franz.cli.commands.config
 
-import com.github.ajalt.clikt.core.CliktCommand
+import dev.franz.cli.FranzCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import dev.franz.cli.config.ConfigManager
 
 class UseContext(
     private val configManager: ConfigManager = ConfigManager()
-) : CliktCommand(
+) : FranzCommand(
     name = "use-context",
     help = """
         Set the current context.
@@ -21,6 +21,6 @@ class UseContext(
     
     override fun run() {
         configManager.setCurrentContext(name)
-        echo("Switched to context \"$name\".")
+        output.line("Switched to context \"$name\".")
     }
 }

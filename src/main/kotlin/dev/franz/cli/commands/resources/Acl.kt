@@ -1,6 +1,6 @@
 package dev.franz.cli.commands.resources
 
-import com.github.ajalt.clikt.core.CliktCommand
+import dev.franz.cli.FranzCommand
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
@@ -12,7 +12,7 @@ import dev.franz.cli.kafka.model.AclPermission
 import dev.franz.cli.kafka.model.PatternType
 import dev.franz.cli.kafka.model.ResourceType
 
-class GetAcl : CliktCommand(
+class GetAcl : FranzCommand(
     name = "acl",
     help = """
         List Kafka ACLs.
@@ -32,19 +32,21 @@ class GetAcl : CliktCommand(
 
     override fun run() {
         val kafka = KafkaService.getInstance()
-        echo("Listing ACLs...")
-        if (principal != null) echo("  Principal: $principal")
-        if (resourceType != null) echo("  Resource Type: $resourceType")
-        if (resourceName != null) echo("  Resource Name: $resourceName")
-        echo()
-        
         val resType = resourceType?.let { parseResourceType(it) }
         val acls = kafka.acls.listAcls(principal, resType, resourceName)
-        
-        echo("PRINCIPAL                  RESOURCE TYPE   RESOURCE NAME        OPERATION   PERMISSION")
-        acls.forEach { acl ->
-            echo("${acl.principal.padEnd(26)} ${acl.resourceType.name.padEnd(15)} ${acl.resourceName.padEnd(20)} ${acl.operation.name.padEnd(11)} ${acl.permission.name}")
-        }
+
+        output.table(
+            headers = listOf("PRINCIPAL", "RESOURCE_TYPE", "RESOURCE_NAME", "OPERATION", "PERMISSION"),
+            rows = acls.map { acl ->
+                listOf(
+                    acl.principal,
+                    acl.resourceType.name,
+                    acl.resourceName,
+                    acl.operation.name,
+                    acl.permission.name
+                )
+            }
+        )
     }
     
     private fun parseResourceType(type: String): ResourceType = when (type) {
@@ -56,7 +58,7 @@ class GetAcl : CliktCommand(
     }
 }
 
-class CreateAcl : CliktCommand(
+class CreateAcl : FranzCommand(
     name = "acl",
     help = """
         Create a Kafka ACL.
@@ -90,17 +92,19 @@ class CreateAcl : CliktCommand(
         val pattern = if (patternType == "literal") PatternType.LITERAL else PatternType.PREFIXED
         
         val acl = kafka.acls.createAcl(principal, resType, resourceName, op, perm, pattern)
-        
-        echo("Creating ACL...")
-        echo()
-        echo("  Principal:      ${acl.principal}")
-        echo("  Resource Type:  ${acl.resourceType.name.lowercase()}")
-        echo("  Resource Name:  ${acl.resourceName}")
-        echo("  Pattern Type:   ${acl.patternType.name.lowercase()}")
-        echo("  Operation:      ${acl.operation.name}")
-        echo("  Permission:     ${acl.permission.name}")
-        echo()
-        echo("ACL created successfully.")
+
+        output.kvTable(
+            listOf(
+                "Principal" to acl.principal,
+                "Resource Type" to acl.resourceType.name.lowercase(),
+                "Resource Name" to acl.resourceName,
+                "Pattern Type" to acl.patternType.name.lowercase(),
+                "Operation" to acl.operation.name,
+                "Permission" to acl.permission.name
+            )
+        )
+        output.line()
+        output.line("ACL created successfully.")
     }
     
     private fun parseResourceType(type: String): ResourceType = when (type) {
@@ -112,7 +116,7 @@ class CreateAcl : CliktCommand(
     }
 }
 
-class DeleteAcl : CliktCommand(
+class DeleteAcl : FranzCommand(
     name = "acl",
     help = """
         Delete Kafka ACLs.
@@ -134,31 +138,36 @@ class DeleteAcl : CliktCommand(
 
     override fun run() {
         val kafka = KafkaService.getInstance()
-        echo("Matching ACLs to delete...")
-        if (principal != null) echo("  Principal: $principal")
-        if (resourceType != null) echo("  Resource Type: $resourceType")
-        if (resourceName != null) echo("  Resource Name: $resourceName")
-        if (operation != null) echo("  Operation: $operation")
-        echo()
-        
         val resType = resourceType?.let { parseResourceType(it) }
         val op = operation?.let { AclOperation.valueOf(it.uppercase()) }
         
         // Preview what would be deleted
         val matching = kafka.acls.listAcls(principal, resType, resourceName)
             .filter { op == null || it.operation == op }
-        
-        echo("Found ${matching.size} matching ACLs:")
-        matching.forEach { acl ->
-            echo("  ${acl.principal}  ${acl.resourceType.name}  ${acl.resourceName}  ${acl.operation.name}  ${acl.permission.name}")
+
+        output.line("Found ${matching.size} matching ACLs.")
+        if (matching.isNotEmpty()) {
+            output.line()
+            output.table(
+                headers = listOf("PRINCIPAL", "RESOURCE_TYPE", "RESOURCE_NAME", "OPERATION", "PERMISSION"),
+                rows = matching.map { acl ->
+                    listOf(
+                        acl.principal,
+                        acl.resourceType.name,
+                        acl.resourceName,
+                        acl.operation.name,
+                        acl.permission.name
+                    )
+                }
+            )
+            output.line()
         }
-        echo()
         
         if (force) {
             val deleted = kafka.acls.deleteAcls(principal, resType, resourceName, op)
-            echo("Deleted ${deleted.size} ACLs.")
+            output.line("Deleted ${deleted.size} ACLs.")
         } else {
-            echo("Use --force to confirm deletion.")
+            output.line("Use --force to confirm deletion.")
         }
     }
     

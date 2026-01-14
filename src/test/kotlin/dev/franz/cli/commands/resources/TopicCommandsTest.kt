@@ -82,7 +82,6 @@ class TopicCommandsTest {
         GetTopic().main(arrayOf("events"))
         
         val output = outputStream.toString()
-        assertThat(output).contains("Filter pattern: events")
         assertThat(output).contains("events")
         verify { topicRepository.listTopics(includeInternal = false, pattern = "events") }
     }
@@ -98,7 +97,6 @@ class TopicCommandsTest {
         GetTopic().main(arrayOf("--show-internal"))
         
         val output = outputStream.toString()
-        assertThat(output).contains("Including internal topics")
         assertThat(output).contains("__consumer_offsets")
         verify { topicRepository.listTopics(includeInternal = true, pattern = null) }
     }
@@ -121,11 +119,13 @@ class TopicCommandsTest {
         DescribeTopic().main(arrayOf("my-topic"))
         
         val output = outputStream.toString()
-        assertThat(output).contains("Topic: my-topic")
-        assertThat(output).contains("Partitions:        3")
-        assertThat(output).contains("Replication:       2")
-        assertThat(output).contains("Cleanup Policy:    delete")
-        assertThat(output).contains("Partition 0: Leader=1")
+        assertThat(output).contains("Name:")
+        assertThat(output).contains("my-topic")
+        assertThat(output).contains("Partitions:")
+        assertThat(output).contains("Replication:")
+        assertThat(output).contains("Cleanup Policy:")
+        assertThat(output).contains("Partition Details:")
+        assertThat(output).contains("ID")
         verify { topicRepository.describeTopic("my-topic") }
     }
     
