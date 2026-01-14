@@ -2,41 +2,49 @@ package dev.franz.cli
 
 import dev.franz.cli.kafka.KafkaService
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
+import java.nio.file.Files
 
 @DisplayName("Franz CLI")
 class FranzTest {
     
     private lateinit var outputStream: ByteArrayOutputStream
+    private lateinit var errorStream: ByteArrayOutputStream
     private lateinit var originalOut: PrintStream
+    private lateinit var originalErr: PrintStream
+    private lateinit var originalUserHome: String
     
     @BeforeEach
     fun setUp() {
         outputStream = ByteArrayOutputStream()
+        errorStream = ByteArrayOutputStream()
         originalOut = System.out
+        originalErr = System.err
         System.setOut(PrintStream(outputStream))
+        System.setErr(PrintStream(errorStream))
         KafkaService.resetInstance()
+
+        // Make tests hermetic: avoid reading developer machine config from ~/.franz/config
+        originalUserHome = System.getProperty("user.home")
+        val tempHome = Files.createTempDirectory("franz-cli-test-home").toAbsolutePath().toString()
+        System.setProperty("user.home", tempHome)
     }
     
     @AfterEach
     fun tearDown() {
         System.setOut(originalOut)
+        System.setErr(originalErr)
         KafkaService.resetInstance()
+        System.setProperty("user.home", originalUserHome)
     }
-    
-    @Test
-    fun `--mock flag uses mock data`() {
-        Franz().main(arrayOf("--mock", "get", "topic"))
-        
-        val output = outputStream.toString()
-        // Mock data includes these topics
-        assertThat(output).contains("my-topic")
-    }
+
+    private fun getAllOutput(): String = outputStream.toString() + errorStream.toString()
     
     @Test
     fun `--help shows context option`() {
@@ -81,12 +89,13 @@ class FranzTest {
     }
     
     @Test
-    fun `defaults to mock when no context configured`() {
-        // When no context is configured, should fall back to mock
-        Franz().main(arrayOf("get", "topic"))
-        
-        val output = outputStream.toString()
-        // Should work (mock mode) rather than fail
-        assertThat(output).contains("Listing topics")
+    fun `errors when no context configured`() {
+        assertThatThrownBy {
+            // In this Clikt integration, parse() doesn't invoke run(), so we call run() ourselves.
+            val cmd = Franz()
+            cmd.parse(arrayOf("get", "topic"))
+            cmd.run()
+        }.hasMessageContaining("No current context")
+            .hasMessageContaining("franz config use-context")
     }
 }

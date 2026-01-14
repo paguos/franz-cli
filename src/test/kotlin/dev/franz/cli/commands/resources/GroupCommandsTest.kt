@@ -5,10 +5,10 @@ import dev.franz.cli.kafka.model.ConsumerGroup
 import dev.franz.cli.kafka.model.GroupMember
 import dev.franz.cli.kafka.model.TopicSubscription
 import dev.franz.cli.kafka.repository.GroupRepository
-import dev.franz.cli.kafka.repository.mock.MockAclRepository
-import dev.franz.cli.kafka.repository.mock.MockBrokerRepository
-import dev.franz.cli.kafka.repository.mock.MockClusterRepository
-import dev.franz.cli.kafka.repository.mock.MockTopicRepository
+import dev.franz.cli.kafka.repository.fake.EmptyAclRepository
+import dev.franz.cli.kafka.repository.fake.EmptyBrokerRepository
+import dev.franz.cli.kafka.repository.fake.EmptyClusterRepository
+import dev.franz.cli.kafka.repository.fake.EmptyTopicRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -32,11 +32,11 @@ class GroupCommandsTest {
     fun setUp() {
         groupRepository = mockk()
         kafkaService = KafkaService(
-            topics = MockTopicRepository(),
-            brokers = MockBrokerRepository(),
+            topics = EmptyTopicRepository(),
+            brokers = EmptyBrokerRepository(),
             groups = groupRepository,
-            acls = MockAclRepository(),
-            cluster = MockClusterRepository()
+            acls = EmptyAclRepository(),
+            cluster = EmptyClusterRepository()
         )
         KafkaService.setInstance(kafkaService)
         

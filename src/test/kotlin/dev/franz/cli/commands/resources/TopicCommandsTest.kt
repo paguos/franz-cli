@@ -4,10 +4,10 @@ import dev.franz.cli.kafka.KafkaService
 import dev.franz.cli.kafka.model.Partition
 import dev.franz.cli.kafka.model.Topic
 import dev.franz.cli.kafka.repository.TopicRepository
-import dev.franz.cli.kafka.repository.mock.MockAclRepository
-import dev.franz.cli.kafka.repository.mock.MockBrokerRepository
-import dev.franz.cli.kafka.repository.mock.MockClusterRepository
-import dev.franz.cli.kafka.repository.mock.MockGroupRepository
+import dev.franz.cli.kafka.repository.fake.EmptyAclRepository
+import dev.franz.cli.kafka.repository.fake.EmptyBrokerRepository
+import dev.franz.cli.kafka.repository.fake.EmptyClusterRepository
+import dev.franz.cli.kafka.repository.fake.EmptyGroupRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -32,10 +32,10 @@ class TopicCommandsTest {
         topicRepository = mockk()
         kafkaService = KafkaService(
             topics = topicRepository,
-            brokers = MockBrokerRepository(),
-            groups = MockGroupRepository(),
-            acls = MockAclRepository(),
-            cluster = MockClusterRepository()
+            brokers = EmptyBrokerRepository(),
+            groups = EmptyGroupRepository(),
+            acls = EmptyAclRepository(),
+            cluster = EmptyClusterRepository()
         )
         KafkaService.setInstance(kafkaService)
         

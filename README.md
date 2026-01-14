@@ -11,7 +11,6 @@ Franz provides a simple, intuitive interface for common Kafka operations with a 
 - **Comprehensive resource management**: Topics, brokers, consumer groups, ACLs
 - **Native binary support**: Fast startup with GraalVM native image
 - **Secure authentication**: Support for SASL (PLAIN, SCRAM, Kerberos, OAuth) and SSL/TLS
-- **Mock mode**: Test commands without connecting to a real cluster
 
 ## Installation
 
@@ -293,15 +292,6 @@ make test-integration
 
 ```bash
 make run ARGS='get topic'
-```
-
-### Mock Mode
-
-Test commands without connecting to Kafka:
-
-```bash
-franz --mock get topic
-franz --mock describe cluster
 ```
 
 ### Project Structure
