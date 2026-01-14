@@ -7,7 +7,14 @@ class ViewConfig(
     private val configManager: ConfigManager = ConfigManager()
 ) : CliktCommand(
     name = "view",
-    help = "Display the current configuration (secrets are redacted)"
+    help = """
+        Display the current configuration (secrets are redacted).
+
+        Examples:
+        ```
+        franz config view
+        ```
+    """.trimIndent()
 ) {
     override fun run() {
         val config = configManager.loadConfig()

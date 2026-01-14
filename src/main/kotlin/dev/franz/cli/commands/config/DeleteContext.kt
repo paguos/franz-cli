@@ -8,7 +8,14 @@ class DeleteContext(
     private val configManager: ConfigManager = ConfigManager()
 ) : CliktCommand(
     name = "delete-context",
-    help = "Delete a context"
+    help = """
+        Delete a context.
+
+        Examples:
+        ```
+        franz config delete-context local
+        ```
+    """.trimIndent()
 ) {
     private val name by argument(help = "Name of the context to delete")
     

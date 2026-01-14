@@ -14,7 +14,16 @@ import dev.franz.cli.kafka.model.ResourceType
 
 class GetAcl : CliktCommand(
     name = "acl",
-    help = "List Kafka ACLs"
+    help = """
+        List Kafka ACLs.
+
+        Examples:
+        ```
+        franz get acl
+        franz get acl --principal User:alice
+        franz get acl --resource-type topic --resource-name my-topic
+        ```
+    """.trimIndent()
 ) {
     private val principal by option("--principal", "-p", help = "Filter by principal")
     private val resourceType by option("--resource-type", "-r", help = "Filter by resource type")
@@ -49,7 +58,14 @@ class GetAcl : CliktCommand(
 
 class CreateAcl : CliktCommand(
     name = "acl",
-    help = "Create a Kafka ACL"
+    help = """
+        Create a Kafka ACL.
+
+        Examples:
+        ```
+        franz create acl --principal User:alice --resource-type topic --resource-name my-topic --operation Read --permission Allow
+        ```
+    """.trimIndent()
 ) {
     private val principal by option("--principal", "-p", help = "Principal (e.g., User:alice)").required()
     private val resourceType by option("--resource-type", "-r", help = "Resource type")
@@ -98,7 +114,15 @@ class CreateAcl : CliktCommand(
 
 class DeleteAcl : CliktCommand(
     name = "acl",
-    help = "Delete Kafka ACLs"
+    help = """
+        Delete Kafka ACLs.
+
+        Examples:
+        ```
+        franz delete acl --principal User:alice --resource-type topic --resource-name my-topic --operation Read
+        franz delete acl --principal User:alice --resource-type topic --resource-name my-topic --operation Read --force
+        ```
+    """.trimIndent()
 ) {
     private val principal by option("--principal", "-p", help = "Principal to match")
     private val resourceType by option("--resource-type", "-r", help = "Resource type to match")

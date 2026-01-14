@@ -9,7 +9,20 @@ import dev.franz.cli.commands.resources.GetTopic
 
 class Get : CliktCommand(
     name = "get",
-    help = "List resources"
+    help = """
+        List Kafka resources.
+
+        Examples:
+        ```
+        franz get topic
+        franz get topic payments-*
+        franz get group --show-empty
+        franz get broker
+        franz get acl --principal User:alice
+        ```
+    """.trimIndent(),
+    invokeWithoutSubcommand = true,
+    printHelpOnEmptyArgs = true
 ) {
     init {
         subcommands(

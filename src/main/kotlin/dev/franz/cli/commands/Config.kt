@@ -6,7 +6,20 @@ import dev.franz.cli.commands.config.*
 
 class Config : CliktCommand(
     name = "config",
-    help = "Manage Franz CLI configuration (contexts, clusters, credentials)"
+    help = """
+        Manage Franz CLI configuration (contexts, clusters, credentials).
+
+        Examples:
+        ```
+        franz config set-cluster local -b localhost:9092
+        franz config set-credentials local --security-protocol PLAINTEXT
+        franz config set-context local --cluster local --auth local
+        franz config use-context local
+        franz config view
+        ```
+    """.trimIndent(),
+    invokeWithoutSubcommand = true,
+    printHelpOnEmptyArgs = true
 ) {
     init {
         subcommands(

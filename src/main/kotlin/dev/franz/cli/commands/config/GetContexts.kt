@@ -7,7 +7,14 @@ class GetContexts(
     private val configManager: ConfigManager = ConfigManager()
 ) : CliktCommand(
     name = "get-contexts",
-    help = "List all configured contexts"
+    help = """
+        List all configured contexts.
+
+        Examples:
+        ```
+        franz config get-contexts
+        ```
+    """.trimIndent()
 ) {
     override fun run() {
         val config = configManager.loadConfig()

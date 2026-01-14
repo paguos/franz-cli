@@ -9,7 +9,19 @@ import dev.franz.cli.commands.resources.DescribeTopic
 
 class Describe : CliktCommand(
     name = "describe",
-    help = "Show detailed information about a resource"
+    help = """
+        Show detailed information about a Kafka resource.
+
+        Examples:
+        ```
+        franz describe topic my-topic
+        franz describe group my-consumer-group --members
+        franz describe broker 1
+        franz describe cluster --health
+        ```
+    """.trimIndent(),
+    invokeWithoutSubcommand = true,
+    printHelpOnEmptyArgs = true
 ) {
     init {
         subcommands(

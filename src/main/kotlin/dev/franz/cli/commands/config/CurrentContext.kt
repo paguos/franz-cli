@@ -7,7 +7,14 @@ class CurrentContext(
     private val configManager: ConfigManager = ConfigManager()
 ) : CliktCommand(
     name = "current-context",
-    help = "Display the current context"
+    help = """
+        Display the current context.
+
+        Examples:
+        ```
+        franz config current-context
+        ```
+    """.trimIndent()
 ) {
     override fun run() {
         val currentContext = configManager.getCurrentContextName()
