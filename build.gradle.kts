@@ -18,6 +18,7 @@ dependencies {
     
     // Kafka client
     implementation("org.apache.kafka:kafka-clients:4.1.0")
+    runtimeOnly("org.slf4j:slf4j-simple:2.0.16")
     
     // YAML configuration (kotlinx.serialization + kaml)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.2")
