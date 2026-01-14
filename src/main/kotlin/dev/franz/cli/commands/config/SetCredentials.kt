@@ -1,6 +1,6 @@
 package dev.franz.cli.commands.config
 
-import com.github.ajalt.clikt.core.CliktCommand
+import dev.franz.cli.FranzCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
@@ -10,7 +10,7 @@ import dev.franz.cli.config.model.*
 
 class SetCredentials(
     private val configManager: ConfigManager = ConfigManager()
-) : CliktCommand(
+) : FranzCommand(
     name = "set-credentials",
     help = """
         Create or update authentication credentials.
@@ -111,6 +111,6 @@ class SetCredentials(
         )
         
         configManager.setAuthConfig(authConfig)
-        echo("Auth config \"$name\" configured with security protocol: ${securityProtocol.name}")
+        output.line("Auth config \"$name\" configured with security protocol: ${securityProtocol.name}")
     }
 }

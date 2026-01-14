@@ -1,11 +1,11 @@
 package dev.franz.cli.commands.config
 
-import com.github.ajalt.clikt.core.CliktCommand
+import dev.franz.cli.FranzCommand
 import dev.franz.cli.config.ConfigManager
 
 class ViewConfig(
     private val configManager: ConfigManager = ConfigManager()
-) : CliktCommand(
+) : FranzCommand(
     name = "view",
     help = """
         Display the current configuration (secrets are redacted).
@@ -18,61 +18,61 @@ class ViewConfig(
 ) {
     override fun run() {
         val config = configManager.loadConfig()
-        
-        echo("apiVersion: ${config.apiVersion}")
-        echo("current-context: ${config.currentContext ?: "(none)"}")
-        echo()
-        
+
+        output.line("apiVersion: ${config.apiVersion}")
+        output.line("current-context: ${config.currentContext ?: "(none)"}")
+        output.line()
+
         if (config.contexts.isNotEmpty()) {
-            echo("contexts:")
+            output.line("contexts:")
             config.contexts.forEach { ctx ->
-                echo("  - name: ${ctx.name}")
-                echo("    cluster: ${ctx.cluster}")
-                ctx.auth?.let { echo("    auth: $it") }
+                output.line("  - name: ${ctx.name}")
+                output.line("    cluster: ${ctx.cluster}")
+                ctx.auth?.let { output.line("    auth: $it") }
             }
-            echo()
+            output.line()
         }
         
         if (config.clusters.isNotEmpty()) {
-            echo("clusters:")
+            output.line("clusters:")
             config.clusters.forEach { cluster ->
-                echo("  - name: ${cluster.name}")
-                echo("    bootstrap-servers: ${cluster.bootstrapServers}")
+                output.line("  - name: ${cluster.name}")
+                output.line("    bootstrap-servers: ${cluster.bootstrapServers}")
             }
-            echo()
+            output.line()
         }
         
         if (config.authConfigs.isNotEmpty()) {
-            echo("auth-configs:")
+            output.line("auth-configs:")
             config.authConfigs.forEach { auth ->
-                echo("  - name: ${auth.name}")
-                echo("    security-protocol: ${auth.securityProtocol}")
+                output.line("  - name: ${auth.name}")
+                output.line("    security-protocol: ${auth.securityProtocol}")
                 
                 auth.sasl?.let { sasl ->
-                    echo("    sasl:")
-                    echo("      mechanism: ${sasl.mechanism}")
-                    sasl.username?.let { echo("      username: $it") }
+                    output.line("    sasl:")
+                    output.line("      mechanism: ${sasl.mechanism}")
+                    sasl.username?.let { output.line("      username: $it") }
                     if (sasl.password != null || sasl.passwordFile != null) {
-                        echo("      password: ***")
+                        output.line("      password: ***")
                     }
-                    sasl.principal?.let { echo("      principal: $it") }
-                    sasl.keytab?.let { echo("      keytab: $it") }
-                    sasl.tokenEndpoint?.let { echo("      token-endpoint: $it") }
-                    sasl.clientId?.let { echo("      client-id: $it") }
+                    sasl.principal?.let { output.line("      principal: $it") }
+                    sasl.keytab?.let { output.line("      keytab: $it") }
+                    sasl.tokenEndpoint?.let { output.line("      token-endpoint: $it") }
+                    sasl.clientId?.let { output.line("      client-id: $it") }
                     if (sasl.clientSecret != null) {
-                        echo("      client-secret: ***")
+                        output.line("      client-secret: ***")
                     }
                 }
                 
                 auth.ssl?.let { ssl ->
-                    echo("    ssl:")
-                    ssl.truststoreLocation?.let { echo("      truststore-location: $it") }
+                    output.line("    ssl:")
+                    ssl.truststoreLocation?.let { output.line("      truststore-location: $it") }
                     if (ssl.truststorePassword != null) {
-                        echo("      truststore-password: ***")
+                        output.line("      truststore-password: ***")
                     }
-                    ssl.keystoreLocation?.let { echo("      keystore-location: $it") }
+                    ssl.keystoreLocation?.let { output.line("      keystore-location: $it") }
                     if (ssl.keystorePassword != null) {
-                        echo("      keystore-password: ***")
+                        output.line("      keystore-password: ***")
                     }
                 }
             }

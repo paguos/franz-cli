@@ -115,10 +115,12 @@ class GroupCommandsTest {
         DescribeGroup().main(arrayOf("my-consumer-group"))
         
         val output = outputStream.toString()
-        assertThat(output).contains("Consumer Group: my-consumer-group")
-        assertThat(output).contains("State:             Stable")
-        assertThat(output).contains("Protocol Type:     consumer")
-        assertThat(output).contains("my-topic (3 partitions)")
+        assertThat(output).contains("Name:")
+        assertThat(output).contains("my-consumer-group")
+        assertThat(output).contains("State:")
+        assertThat(output).contains("Protocol Type:")
+        assertThat(output).contains("Topic Subscriptions:")
+        assertThat(output).contains("my-topic")
         assertThat(output).contains("1,234 messages")
         verify { groupRepository.describeGroup("my-consumer-group") }
     }
@@ -139,9 +141,10 @@ class GroupCommandsTest {
         
         val output = outputStream.toString()
         assertThat(output).contains("Members:")
-        assertThat(output).contains("consumer-1 (client-id: app-1)")
-        assertThat(output).contains("consumer-2 (client-id: app-2)")
-        assertThat(output).contains("Assigned:")
+        assertThat(output).contains("MEMBER_ID")
+        assertThat(output).contains("consumer-1")
+        assertThat(output).contains("app-1")
+        assertThat(output).contains("topic[0,1]")
     }
     
     @Test

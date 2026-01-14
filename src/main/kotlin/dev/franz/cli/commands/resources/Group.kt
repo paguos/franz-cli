@@ -1,6 +1,6 @@
 package dev.franz.cli.commands.resources
 
-import com.github.ajalt.clikt.core.CliktCommand
+import dev.franz.cli.FranzCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.flag
@@ -8,7 +8,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import dev.franz.cli.kafka.KafkaService
 import java.text.NumberFormat
 
-class GetGroup : CliktCommand(
+class GetGroup : FranzCommand(
     name = "group",
     help = """
         List Kafka consumer groups.
@@ -26,27 +26,22 @@ class GetGroup : CliktCommand(
 
     override fun run() {
         val kafka = KafkaService.getInstance()
-        echo("Listing consumer groups...")
-        if (pattern != null) {
-            echo("  Filter pattern: $pattern")
-        }
-        echo()
-        
         val groups = kafka.groups.listGroups(includeEmpty = showEmpty, pattern = pattern)
-        
-        echo("GROUP                         STATE            MEMBERS")
-        groups.forEach { group ->
-            echo("${group.name.padEnd(29)} ${group.state.padEnd(16)} ${group.members.size}")
-        }
-        
-        if (!showEmpty) {
-            echo()
-            echo("(Use --show-empty to include empty groups)")
-        }
+
+        output.table(
+            headers = listOf("GROUP", "STATE", "MEMBERS"),
+            rows = groups.map { group ->
+                listOf(
+                    group.name,
+                    group.state,
+                    group.members.size.toString()
+                )
+            }
+        )
     }
 }
 
-class DescribeGroup : CliktCommand(
+class DescribeGroup : FranzCommand(
     name = "group",
     help = """
         Show detailed information about a Kafka consumer group.
@@ -66,41 +61,52 @@ class DescribeGroup : CliktCommand(
         val group = kafka.groups.describeGroup(name)
         
         if (group == null) {
-            echo("Consumer group '$name' not found.", err = true)
+            errorLine("Consumer group '$name' not found.")
             return
         }
-        
-        echo("Consumer Group: ${group.name}")
-        echo("=".repeat(50))
-        echo("State:             ${group.state}")
-        echo("Protocol Type:     ${group.protocolType}")
-        echo("Protocol:          ${group.protocol}")
-        echo("Coordinator:       ${group.coordinator}")
-        echo()
-        
+
+        output.kvTable(
+            listOf(
+                "Name" to group.name,
+                "State" to group.state,
+                "Protocol Type" to group.protocolType,
+                "Protocol" to group.protocol,
+                "Coordinator" to group.coordinator
+            )
+        )
+
         if (group.topicSubscriptions.isNotEmpty()) {
-            echo("Topic Subscriptions:")
-            group.topicSubscriptions.forEach { sub ->
-                echo("  - ${sub.topic} (${sub.partitions} partitions)")
-            }
-            echo()
-        }
-        
-        echo("Lag Summary:")
-        echo("  Total Lag:       ${NumberFormat.getInstance().format(group.totalLag)} messages")
-        
-        if (showMembers && group.members.isNotEmpty()) {
-            echo()
-            echo("Members:")
-            group.members.forEach { member ->
-                echo("  ${member.memberId} (client-id: ${member.clientId})")
-                if (member.assignments.isNotEmpty()) {
-                    echo("    Assigned: ${member.assignments.joinToString(", ")}")
+            output.line()
+            output.section("Topic Subscriptions")
+            output.table(
+                headers = listOf("TOPIC", "PARTITIONS"),
+                rows = group.topicSubscriptions.map { sub ->
+                    listOf(sub.topic, sub.partitions.toString())
                 }
-            }
-        } else if (!showMembers) {
-            echo()
-            echo("(Use --members to show member details)")
+            )
+        }
+
+        output.line()
+        output.section("Lag Summary")
+        output.kvTable(
+            listOf(
+                "Total Lag" to "${NumberFormat.getInstance().format(group.totalLag)} messages"
+            )
+        )
+
+        if (showMembers && group.members.isNotEmpty()) {
+            output.line()
+            output.section("Members")
+            output.table(
+                headers = listOf("MEMBER_ID", "CLIENT_ID", "ASSIGNMENTS"),
+                rows = group.members.map { member ->
+                    listOf(
+                        member.memberId,
+                        member.clientId,
+                        member.assignments.joinToString(", ")
+                    )
+                }
+            )
         }
     }
 }

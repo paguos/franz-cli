@@ -1,12 +1,12 @@
 package dev.franz.cli.commands.config
 
-import com.github.ajalt.clikt.core.CliktCommand
+import dev.franz.cli.FranzCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import dev.franz.cli.config.ConfigManager
 
 class DeleteContext(
     private val configManager: ConfigManager = ConfigManager()
-) : CliktCommand(
+) : FranzCommand(
     name = "delete-context",
     help = """
         Delete a context.
@@ -23,9 +23,9 @@ class DeleteContext(
         val deleted = configManager.deleteContext(name)
         
         if (deleted) {
-            echo("Context \"$name\" deleted.")
+            output.line("Context \"$name\" deleted.")
         } else {
-            echo("Context \"$name\" not found.")
+            output.line("Context \"$name\" not found.")
         }
     }
 }

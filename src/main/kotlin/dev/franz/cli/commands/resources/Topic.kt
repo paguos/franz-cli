@@ -1,13 +1,13 @@
 package dev.franz.cli.commands.resources
 
-import com.github.ajalt.clikt.core.CliktCommand
+import dev.franz.cli.FranzCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import dev.franz.cli.kafka.KafkaService
 
-class GetTopic : CliktCommand(
+class GetTopic : FranzCommand(
     name = "topic",
     help = """
         List Kafka topics.
@@ -25,25 +25,22 @@ class GetTopic : CliktCommand(
 
     override fun run() {
         val kafka = KafkaService.getInstance()
-        echo("Listing topics...")
-        if (pattern != null) {
-            echo("  Filter pattern: $pattern")
-        }
-        if (showInternal) {
-            echo("  Including internal topics")
-        }
-        echo()
-        
         val topics = kafka.topics.listTopics(includeInternal = showInternal, pattern = pattern)
-        
-        echo("TOPIC                    PARTITIONS   REPLICAS")
-        topics.forEach { topic ->
-            echo("${topic.name.padEnd(24)} ${topic.partitions.toString().padEnd(12)} ${topic.replicationFactor}")
-        }
+
+        output.table(
+            headers = listOf("TOPIC", "PARTITIONS", "REPLICAS"),
+            rows = topics.map { topic ->
+                listOf(
+                    topic.name,
+                    topic.partitions.toString(),
+                    topic.replicationFactor.toString()
+                )
+            }
+        )
     }
 }
 
-class DescribeTopic : CliktCommand(
+class DescribeTopic : FranzCommand(
     name = "topic",
     help = """
         Show detailed information about a topic.
@@ -61,28 +58,39 @@ class DescribeTopic : CliktCommand(
         val topic = kafka.topics.describeTopic(name)
         
         if (topic == null) {
-            echo("Topic '$name' not found.", err = true)
+            errorLine("Topic '$name' not found.")
             return
         }
-        
-        echo("Topic: ${topic.name}")
-        echo("=".repeat(50))
-        echo("Partitions:        ${topic.partitions}")
-        echo("Replication:       ${topic.replicationFactor}")
-        echo("Cleanup Policy:    ${topic.cleanupPolicy}")
-        echo("Retention (ms):    ${topic.retentionMs} (${topic.retentionMs / 86400000} days)")
-        echo()
-        
+
+        output.kvTable(
+            listOf(
+                "Name" to topic.name,
+                "Partitions" to topic.partitions.toString(),
+                "Replication" to topic.replicationFactor.toString(),
+                "Cleanup Policy" to topic.cleanupPolicy,
+                "Retention (ms)" to "${topic.retentionMs} (${topic.retentionMs / 86400000} days)"
+            )
+        )
+
         if (topic.partitionDetails.isNotEmpty()) {
-            echo("Partition Details:")
-            topic.partitionDetails.forEach { p ->
-                echo("  Partition ${p.id}: Leader=${p.leader}, Replicas=${p.replicas}, ISR=${p.isr}")
-            }
+            output.line()
+            output.section("Partition Details")
+            output.table(
+                headers = listOf("ID", "LEADER", "REPLICAS", "ISR"),
+                rows = topic.partitionDetails.map { partition ->
+                    listOf(
+                        partition.id.toString(),
+                        partition.leader.toString(),
+                        partition.replicas.joinToString(","),
+                        partition.isr.joinToString(",")
+                    )
+                }
+            )
         }
     }
 }
 
-class DeleteTopic : CliktCommand(
+class DeleteTopic : FranzCommand(
     name = "topic",
     help = """
         Delete a Kafka topic.
@@ -101,12 +109,12 @@ class DeleteTopic : CliktCommand(
         if (force) {
             val deleted = kafka.topics.deleteTopic(name)
             if (deleted) {
-                echo("Deleted topic '$name'.")
+                output.line("Deleted topic '$name'.")
             } else {
-                echo("Topic '$name' not found.", err = true)
+                errorLine("Topic '$name' not found.")
             }
         } else {
-            echo("Would delete topic '$name'. Use --force to confirm.")
+            output.line("Would delete topic '$name'. Use --force to confirm.")
         }
     }
 }

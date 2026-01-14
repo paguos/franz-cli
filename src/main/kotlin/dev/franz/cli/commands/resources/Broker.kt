@@ -1,13 +1,13 @@
 package dev.franz.cli.commands.resources
 
-import com.github.ajalt.clikt.core.CliktCommand
+import dev.franz.cli.FranzCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import dev.franz.cli.kafka.KafkaService
 
-class GetBroker : CliktCommand(
+class GetBroker : FranzCommand(
     name = "broker",
     help = """
         List Kafka brokers.
@@ -23,37 +23,48 @@ class GetBroker : CliktCommand(
 
     override fun run() {
         val kafka = KafkaService.getInstance()
-        echo("Listing brokers...")
-        echo()
-        
         val brokers = kafka.brokers.listBrokers()
         val controllerId = kafka.brokers.getControllerId()
-        
-        echo("ID    HOST                PORT    RACK")
-        brokers.forEach { broker ->
-            echo("${broker.id.toString().padEnd(5)} ${broker.host.padEnd(19)} ${broker.port.toString().padEnd(7)} ${broker.rack ?: "N/A"}")
-        }
-        echo()
-        
+
+        output.table(
+            headers = listOf("ID", "HOST", "PORT", "RACK"),
+            rows = brokers.map { broker ->
+                listOf(
+                    broker.id.toString(),
+                    broker.host,
+                    broker.port.toString(),
+                    broker.rack ?: "N/A"
+                )
+            }
+        )
+
         val controller = brokers.find { it.id == controllerId }
         if (controller != null) {
-            echo("Controller: ${controller.host}:${controller.port} (id: ${controller.id})")
+            output.line()
+            output.kvTable(
+                listOf(
+                    "Controller" to "${controller.host}:${controller.port} (id: ${controller.id})"
+                )
+            )
         }
         
         if (showConfigs && brokers.isNotEmpty()) {
             val firstBroker = brokers.first()
             if (firstBroker.configs.isNotEmpty()) {
-                echo()
-                echo("Common Broker Configs:")
-                firstBroker.configs.entries.take(3).forEach { (key, value) ->
-                    echo("  $key=$value")
-                }
+                output.line()
+                output.section("Common Broker Configs")
+                output.table(
+                    headers = listOf("NAME", "VALUE"),
+                    rows = firstBroker.configs.entries.take(3).map { (key, value) ->
+                        listOf(key, value)
+                    }
+                )
             }
         }
     }
 }
 
-class DescribeBroker : CliktCommand(
+class DescribeBroker : FranzCommand(
     name = "broker",
     help = """
         Show detailed information about a broker.
@@ -73,45 +84,56 @@ class DescribeBroker : CliktCommand(
         val broker = kafka.brokers.describeBroker(id)
         
         if (broker == null) {
-            echo("Broker '$id' not found.", err = true)
+            errorLine("Broker '$id' not found.")
             return
         }
-        
-        echo("Broker: ${broker.id}")
-        echo("=".repeat(50))
-        echo("Host:              ${broker.host}")
-        echo("Port:              ${broker.port}")
-        echo("Rack:              ${broker.rack ?: "N/A"}")
-        echo("Version:           ${broker.version}")
-        echo()
-        
+
+        output.kvTable(
+            listOf(
+                "ID" to broker.id.toString(),
+                "Host" to broker.host,
+                "Port" to broker.port.toString(),
+                "Rack" to (broker.rack ?: "N/A"),
+                "Version" to broker.version
+            )
+        )
+
         if (broker.listeners.isNotEmpty()) {
-            echo("Listeners:")
-            broker.listeners.forEach { listener ->
-                echo("  $listener")
-            }
-            echo()
+            output.line()
+            output.section("Listeners")
+            output.table(
+                headers = listOf("LISTENER"),
+                rows = broker.listeners.map { listener -> listOf(listener) }
+            )
         }
         
         if (broker.configs.isNotEmpty()) {
-            echo("Configurations:")
-            broker.configs.forEach { (key, value) ->
-                echo("  ${key.padEnd(30)} = $value")
-            }
+            output.line()
+            output.section("Configurations")
+            output.table(
+                headers = listOf("NAME", "VALUE"),
+                rows = broker.configs.map { (key, value) -> listOf(key, value) }
+            )
         }
         
         if (showLogDirs && broker.logDirs.isNotEmpty()) {
-            echo()
-            echo("Log Directories:")
-            broker.logDirs.forEach { logDir ->
-                val totalGb = logDir.totalBytes / (1024 * 1024 * 1024)
-                val usedGb = logDir.usedBytes / (1024 * 1024 * 1024)
-                val availableGb = logDir.availableBytes / (1024 * 1024 * 1024)
-                echo("  ${logDir.path}:")
-                echo("    Total:     $totalGb GB")
-                echo("    Used:      $usedGb GB (${"%.1f".format(logDir.usedPercent)}%)")
-                echo("    Available: $availableGb GB")
-            }
+            output.line()
+            output.section("Log Directories")
+            output.table(
+                headers = listOf("PATH", "TOTAL_GB", "USED_GB", "AVAILABLE_GB", "USED_PCT"),
+                rows = broker.logDirs.map { logDir ->
+                    val totalGb = logDir.totalBytes / (1024 * 1024 * 1024)
+                    val usedGb = logDir.usedBytes / (1024 * 1024 * 1024)
+                    val availableGb = logDir.availableBytes / (1024 * 1024 * 1024)
+                    listOf(
+                        logDir.path,
+                        totalGb.toString(),
+                        usedGb.toString(),
+                        availableGb.toString(),
+                        "%.1f".format(logDir.usedPercent)
+                    )
+                }
+            )
         }
     }
 }

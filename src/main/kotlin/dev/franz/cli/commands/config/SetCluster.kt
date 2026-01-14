@@ -1,6 +1,6 @@
 package dev.franz.cli.commands.config
 
-import com.github.ajalt.clikt.core.CliktCommand
+import dev.franz.cli.FranzCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
@@ -9,7 +9,7 @@ import dev.franz.cli.config.model.ClusterEntry
 
 class SetCluster(
     private val configManager: ConfigManager = ConfigManager()
-) : CliktCommand(
+) : FranzCommand(
     name = "set-cluster",
     help = """
         Create or update a cluster configuration.
@@ -34,6 +34,6 @@ class SetCluster(
         )
         
         configManager.setCluster(cluster)
-        echo("Cluster \"$name\" configured with bootstrap servers: $bootstrapServers")
+        output.line("Cluster \"$name\" configured with bootstrap servers: $bootstrapServers")
     }
 }

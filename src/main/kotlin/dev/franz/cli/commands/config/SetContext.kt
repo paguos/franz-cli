@@ -1,6 +1,6 @@
 package dev.franz.cli.commands.config
 
-import com.github.ajalt.clikt.core.CliktCommand
+import dev.franz.cli.FranzCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
@@ -9,7 +9,7 @@ import dev.franz.cli.config.model.ContextEntry
 
 class SetContext(
     private val configManager: ConfigManager = ConfigManager()
-) : CliktCommand(
+) : FranzCommand(
     name = "set-context",
     help = """
         Create or update a context (ties a name to a cluster + optional auth config).
@@ -33,6 +33,6 @@ class SetContext(
         )
         
         configManager.setContext(context)
-        echo("Context \"$name\" configured.")
+        output.line("Context \"$name\" configured.")
     }
 }

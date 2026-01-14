@@ -1,11 +1,11 @@
 package dev.franz.cli.commands.resources
 
-import com.github.ajalt.clikt.core.CliktCommand
+import dev.franz.cli.FranzCommand
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import dev.franz.cli.kafka.KafkaService
 
-class DescribeCluster : CliktCommand(
+class DescribeCluster : FranzCommand(
     name = "cluster",
     help = """
         Show Kafka cluster information.
@@ -24,42 +24,50 @@ class DescribeCluster : CliktCommand(
     override fun run() {
         val kafka = KafkaService.getInstance()
         val cluster = kafka.cluster.describeCluster()
-        
-        echo("Cluster Information")
-        echo("=".repeat(50))
-        echo("Cluster ID:        ${cluster.clusterId}")
-        echo("Controller:        ${cluster.controllerHost} (id: ${cluster.controllerId})")
-        echo("Brokers:           ${cluster.brokerCount}")
-        echo("Topics:            ${cluster.topicCount}")
-        echo("Partitions:        ${cluster.partitionCount}")
-        echo()
-        echo("Kafka Version:     ${cluster.kafkaVersion}")
-        echo("Protocol Version:  ${cluster.protocolVersion}")
-        
+
+        output.kvTable(
+            listOf(
+                "Cluster ID" to cluster.clusterId,
+                "Controller" to "${cluster.controllerHost} (id: ${cluster.controllerId})",
+                "Brokers" to cluster.brokerCount.toString(),
+                "Topics" to cluster.topicCount.toString(),
+                "Partitions" to cluster.partitionCount.toString(),
+                "Kafka Version" to cluster.kafkaVersion,
+                "Protocol Version" to cluster.protocolVersion
+            )
+        )
+
         if (showHealth) {
-            echo()
-            echo("Health Status:")
-            echo("  Under-replicated Partitions: ${cluster.underReplicatedPartitions}")
-            echo("  Offline Partitions:          ${cluster.offlinePartitions}")
-            echo("  Controller Active:           ${if (cluster.isControllerActive) "Yes" else "No"}")
-            echo("  All Brokers Online:          ${if (cluster.allBrokersOnline) "Yes" else "No"}")
-            echo()
             val isHealthy = cluster.underReplicatedPartitions == 0 && 
                            cluster.offlinePartitions == 0 && 
                            cluster.isControllerActive && 
                            cluster.allBrokersOnline
-            echo("Status: ${if (isHealthy) "HEALTHY" else "DEGRADED"}")
+            output.line()
+            output.section("Health Status")
+            output.kvTable(
+                listOf(
+                    "Under-replicated Partitions" to cluster.underReplicatedPartitions.toString(),
+                    "Offline Partitions" to cluster.offlinePartitions.toString(),
+                    "Controller Active" to if (cluster.isControllerActive) "Yes" else "No",
+                    "All Brokers Online" to if (cluster.allBrokersOnline) "Yes" else "No",
+                    "Status" to if (isHealthy) "HEALTHY" else "DEGRADED"
+                )
+            )
         }
         
         if (showTopics) {
             val topics = kafka.topics.listTopics(includeInternal = true)
             val internalCount = topics.count { it.isInternal }
             val userCount = topics.size - internalCount
-            
-            echo()
-            echo("Topic Summary:")
-            echo("  Internal Topics:    $internalCount")
-            echo("  User Topics:        $userCount")
+
+            output.line()
+            output.section("Topic Summary")
+            output.kvTable(
+                listOf(
+                    "Internal Topics" to internalCount.toString(),
+                    "User Topics" to userCount.toString()
+                )
+            )
         }
     }
 }
