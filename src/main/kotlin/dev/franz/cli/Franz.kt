@@ -12,6 +12,7 @@ import dev.franz.cli.commands.Create
 import dev.franz.cli.commands.Delete
 import dev.franz.cli.commands.Describe
 import dev.franz.cli.commands.Get
+import dev.franz.cli.config.ConfigException
 import dev.franz.cli.kafka.KafkaService
 
 class Franz : CliktCommand(
@@ -38,11 +39,6 @@ class Franz : CliktCommand(
         "--context", "-c",
         help = "Name of the context to use (overrides current-context from config)"
     )
-    
-    private val mock by option(
-        "--mock",
-        help = "Use mock data instead of connecting to Kafka"
-    ).flag()
 
     init {
         // Work around broken terminal width detection in some native-image builds, which can cause
@@ -69,19 +65,14 @@ class Franz : CliktCommand(
         // Avoid configuring Kafka in that case to keep `franz` side-effect free.
         if (currentContext.invokedSubcommand == null) return
 
-        // Configure KafkaService based on options
-        if (mock) {
-            KafkaService.configureMock()
-        } else {
-            // Use context-based configuration
-            // If no context specified and no current context, commands will fail with helpful message
-            try {
-                KafkaService.configureFromContext(contextName)
-            } catch (e: Exception) {
-                // Don't fail here - let the subcommand handle it
-                // This allows 'config' commands to work without a context
-                KafkaService.configureMock()
-            }
+        // Do not require a Kafka context for configuration commands
+        if (currentContext.invokedSubcommand?.commandName == "config") return
+
+        // All Kafka commands require a valid context (via --context or current-context)
+        try {
+            KafkaService.configureFromContext(contextName)
+        } catch (e: ConfigException) {
+            currentContext.fail(e.message ?: "Failed to resolve Kafka context.")
         }
     }
 }

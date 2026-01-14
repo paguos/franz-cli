@@ -7,10 +7,10 @@ import dev.franz.cli.kafka.model.AclPermission
 import dev.franz.cli.kafka.model.PatternType
 import dev.franz.cli.kafka.model.ResourceType
 import dev.franz.cli.kafka.repository.AclRepository
-import dev.franz.cli.kafka.repository.mock.MockBrokerRepository
-import dev.franz.cli.kafka.repository.mock.MockClusterRepository
-import dev.franz.cli.kafka.repository.mock.MockGroupRepository
-import dev.franz.cli.kafka.repository.mock.MockTopicRepository
+import dev.franz.cli.kafka.repository.fake.EmptyBrokerRepository
+import dev.franz.cli.kafka.repository.fake.EmptyClusterRepository
+import dev.franz.cli.kafka.repository.fake.EmptyGroupRepository
+import dev.franz.cli.kafka.repository.fake.EmptyTopicRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -32,11 +32,11 @@ class AclCommandsTest {
     fun setUp() {
         aclRepository = mockk()
         kafkaService = KafkaService(
-            topics = MockTopicRepository(),
-            brokers = MockBrokerRepository(),
-            groups = MockGroupRepository(),
+            topics = EmptyTopicRepository(),
+            brokers = EmptyBrokerRepository(),
+            groups = EmptyGroupRepository(),
             acls = aclRepository,
-            cluster = MockClusterRepository()
+            cluster = EmptyClusterRepository()
         )
         KafkaService.setInstance(kafkaService)
         

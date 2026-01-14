@@ -4,10 +4,10 @@ import dev.franz.cli.kafka.KafkaService
 import dev.franz.cli.kafka.model.Broker
 import dev.franz.cli.kafka.model.LogDir
 import dev.franz.cli.kafka.repository.BrokerRepository
-import dev.franz.cli.kafka.repository.mock.MockAclRepository
-import dev.franz.cli.kafka.repository.mock.MockClusterRepository
-import dev.franz.cli.kafka.repository.mock.MockGroupRepository
-import dev.franz.cli.kafka.repository.mock.MockTopicRepository
+import dev.franz.cli.kafka.repository.fake.EmptyAclRepository
+import dev.franz.cli.kafka.repository.fake.EmptyClusterRepository
+import dev.franz.cli.kafka.repository.fake.EmptyGroupRepository
+import dev.franz.cli.kafka.repository.fake.EmptyTopicRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -31,11 +31,11 @@ class BrokerCommandsTest {
     fun setUp() {
         brokerRepository = mockk()
         kafkaService = KafkaService(
-            topics = MockTopicRepository(),
+            topics = EmptyTopicRepository(),
             brokers = brokerRepository,
-            groups = MockGroupRepository(),
-            acls = MockAclRepository(),
-            cluster = MockClusterRepository()
+            groups = EmptyGroupRepository(),
+            acls = EmptyAclRepository(),
+            cluster = EmptyClusterRepository()
         )
         KafkaService.setInstance(kafkaService)
         

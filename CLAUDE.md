@@ -46,7 +46,7 @@ NO_CACHE=1 make test       # Disable build cache
 ### Command Structure
 
 Franz uses Clikt for CLI structure with a hierarchical command pattern:
-- **Root**: `Franz` class in Franz.kt - configures KafkaService, handles `--context` and `--mock` flags
+- **Root**: `Franz` class in Franz.kt - configures KafkaService, handles `--context` flag
 - **Verb commands**: `Get`, `Describe`, `Create`, `Delete`, `Config` in commands/
 - **Resource commands**: Implementations in commands/resources/ (Topic.kt, Broker.kt, Group.kt, Acl.kt, Cluster.kt)
 - **Config subcommands**: Implementations in commands/config/ (SetContext.kt, UseContext.kt, etc.)
@@ -72,13 +72,11 @@ Each command follows the pattern: `franz <verb> <resource> [args] [flags]`
 
 **KafkaService** (kafka/KafkaService.kt):
 - Singleton facade providing access to all repositories
-- Can be configured with real Kafka AdminClient or mock implementations
-- Configured via `configureFromContext()` or `configureMock()`
+- Configured via `configureFromContext()`
 
 **Repository Pattern** (kafka/repository/):
 - Interface-based: TopicRepository, BrokerRepository, GroupRepository, AclRepository, ClusterRepository
 - Real implementations in kafka/: Use Kafka AdminClient
-- Mock implementations in mock/: Return sample data for `--mock` flag
 - Commands access via `KafkaService.getInstance().topics`, `.brokers`, etc.
 
 **Models** (kafka/model/Models.kt):

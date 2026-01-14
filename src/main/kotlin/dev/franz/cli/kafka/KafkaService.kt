@@ -12,11 +12,6 @@ import dev.franz.cli.kafka.repository.kafka.KafkaBrokerRepository
 import dev.franz.cli.kafka.repository.kafka.KafkaClusterRepository
 import dev.franz.cli.kafka.repository.kafka.KafkaGroupRepository
 import dev.franz.cli.kafka.repository.kafka.KafkaTopicRepository
-import dev.franz.cli.kafka.repository.mock.MockAclRepository
-import dev.franz.cli.kafka.repository.mock.MockBrokerRepository
-import dev.franz.cli.kafka.repository.mock.MockClusterRepository
-import dev.franz.cli.kafka.repository.mock.MockGroupRepository
-import dev.franz.cli.kafka.repository.mock.MockTopicRepository
 import org.apache.kafka.clients.admin.AdminClient
 import java.util.Properties
 
@@ -44,13 +39,13 @@ class KafkaService(
         
         /**
          * Get the current KafkaService instance.
-         * If not configured, returns a mock instance.
+         * If not configured, throws.
          */
         fun getInstance(): KafkaService {
-            if (instance == null) {
-                instance = createMockService()
-            }
-            return instance!!
+            return instance ?: throw IllegalStateException(
+                "KafkaService not configured. " +
+                    "Select a context with --context or set current-context via 'franz config use-context <name>'."
+            )
         }
         
         /**
@@ -75,14 +70,6 @@ class KafkaService(
         }
         
         /**
-         * Configure KafkaService to use mock implementations.
-         */
-        fun configureMock() {
-            instance?.close()
-            instance = createMockService()
-        }
-        
-        /**
          * For testing - allows injecting a custom instance.
          */
         fun setInstance(service: KafkaService) {
@@ -93,16 +80,6 @@ class KafkaService(
         fun resetInstance() {
             instance?.close()
             instance = null
-        }
-        
-        private fun createMockService(): KafkaService {
-            return KafkaService(
-                topics = MockTopicRepository(),
-                brokers = MockBrokerRepository(),
-                groups = MockGroupRepository(),
-                acls = MockAclRepository(),
-                cluster = MockClusterRepository()
-            )
         }
         
         private fun createRealService(props: Properties): KafkaService {
