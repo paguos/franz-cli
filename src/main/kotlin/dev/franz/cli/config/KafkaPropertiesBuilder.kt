@@ -17,6 +17,12 @@ import java.util.Properties
 class KafkaPropertiesBuilder(
     private val credentialResolver: CredentialResolver = CredentialResolver()
 ) {
+    private companion object {
+        // Kafka PEM SSL config (KIP-651). We use string keys for compatibility across client versions.
+        private const val SSL_TRUSTSTORE_CERTIFICATES = "ssl.truststore.certificates"
+        private const val SSL_KEYSTORE_CERTIFICATE_CHAIN = "ssl.keystore.certificate.chain"
+        private const val SSL_KEYSTORE_KEY = "ssl.keystore.key"
+    }
     
     /**
      * Builds Kafka client properties from a resolved context.
@@ -42,10 +48,54 @@ class KafkaPropertiesBuilder(
             context.sasl?.let { sasl ->
                 configureSasl(this, sasl)
             }
+            
+            // Escape hatch overrides (last-wins)
+            context.kafkaProperties.forEach { (k, v) ->
+                // Allow ${ENV_VAR} expansion in values
+                this[k] = credentialResolver.resolveEnvVar(v) ?: v
+            }
         }
     }
     
     private fun configureSsl(props: Properties, ssl: SslConfig) {
+        val pemMode = (ssl.caFile != null) || (ssl.clientFile != null) || (ssl.clientKeyFile != null)
+        if (pemMode) {
+            // Disallow mixing PEM-style config with keystore/truststore file config.
+            val keystoreModeFields = listOf(
+                ssl.truststoreLocation,
+                ssl.truststorePassword,
+                ssl.keystoreLocation,
+                ssl.keystorePassword,
+                ssl.keyPassword
+            )
+            if (keystoreModeFields.any { it != null }) {
+                throw ConfigException(
+                    "Invalid SSL config: PEM fields (cafile/clientfile/clientkeyfile) cannot be combined with " +
+                        "truststore/keystore fields (truststore-location/keystore-location/etc.)."
+                )
+            }
+            
+            // If configuring mTLS, require both cert and key.
+            if ((ssl.clientFile != null) xor (ssl.clientKeyFile != null)) {
+                throw ConfigException("Invalid SSL config: both clientfile and clientkeyfile must be set for mTLS.")
+            }
+            
+            // Trust (server validation)
+            ssl.caFile?.let { caPath ->
+                props[SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG] = "PEM"
+                props[SSL_TRUSTSTORE_CERTIFICATES] = credentialResolver.resolveFile(caPath)
+            }
+            
+            // Client auth (mTLS)
+            if (ssl.clientFile != null && ssl.clientKeyFile != null) {
+                props[SslConfigs.SSL_KEYSTORE_TYPE_CONFIG] = "PEM"
+                props[SSL_KEYSTORE_CERTIFICATE_CHAIN] = credentialResolver.resolveFile(ssl.clientFile)
+                props[SSL_KEYSTORE_KEY] = credentialResolver.resolveFile(ssl.clientKeyFile)
+            }
+            
+            return
+        }
+        
         ssl.truststoreLocation?.let {
             props[SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG] = credentialResolver.expandPath(it)
         }

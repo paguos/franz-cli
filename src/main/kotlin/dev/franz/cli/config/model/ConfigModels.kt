@@ -67,7 +67,14 @@ data class AuthConfigEntry(
     val sasl: SaslConfig? = null,
     
     @SerialName("ssl")
-    val ssl: SslConfig? = null
+    val ssl: SslConfig? = null,
+    
+    /**
+     * Escape hatch for advanced Kafka client configuration.
+     * These entries are merged into the final Kafka Properties (last-wins).
+     */
+    @SerialName("kafka-properties")
+    val kafkaProperties: Map<String, String> = emptyMap()
 )
 
 /**
@@ -165,5 +172,18 @@ data class SslConfig(
     val keystoreType: String = "JKS",
     
     @SerialName("key-password")
-    val keyPassword: String? = null
+    val keyPassword: String? = null,
+    
+    /**
+     * PEM configuration (KIP-651 style).
+     * These are paths to PEM files and are mutually exclusive with keystore/truststore file options.
+     */
+    @SerialName("cafile")
+    val caFile: String? = null,
+    
+    @SerialName("clientfile")
+    val clientFile: String? = null,
+    
+    @SerialName("clientkeyfile")
+    val clientKeyFile: String? = null
 )
