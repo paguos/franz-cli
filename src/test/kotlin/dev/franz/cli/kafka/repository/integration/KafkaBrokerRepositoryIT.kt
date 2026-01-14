@@ -3,12 +3,14 @@ package dev.franz.cli.kafka.repository.integration
 import dev.franz.cli.kafka.repository.kafka.KafkaBrokerRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
 /**
  * Integration tests for KafkaBrokerRepository.
  * Tests run against a real Kafka instance via Testcontainers.
  */
+@Tag("integration")
 class KafkaBrokerRepositoryIT : KafkaTestBase() {
     
     private lateinit var repository: KafkaBrokerRepository

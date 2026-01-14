@@ -4,6 +4,7 @@ import dev.franz.cli.kafka.repository.kafka.KafkaTopicRepository
 import org.apache.kafka.clients.admin.NewTopic
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
@@ -11,6 +12,7 @@ import java.util.UUID
  * Integration tests for KafkaTopicRepository.
  * Tests run against a real Kafka instance via Testcontainers.
  */
+@Tag("integration")
 class KafkaTopicRepositoryIT : KafkaTestBase() {
     
     private lateinit var repository: KafkaTopicRepository
